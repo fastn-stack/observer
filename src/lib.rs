@@ -6,12 +6,13 @@ use serde::ser::{Serialize, Serializer};
 
 pub mod context;
 pub mod event;
+pub mod observer;
 
 pub type AResult<T> = Result<T, OError>;
 
 #[derive(Debug)]
-pub struct OError{
-    pub error: failure::Error
+pub struct OError {
+    pub error: failure::Error,
 }
 
 impl Serialize for OError {

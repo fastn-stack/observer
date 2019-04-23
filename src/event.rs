@@ -2,27 +2,20 @@ use crate::context::Context;
 use crate::AResult;
 use serde;
 use serde_json;
+use std::cell::RefCell;
+use std::collections::LinkedList;
 use std::time::Instant;
 
 pub trait Event<T> {
-    fn map(&self, ctx: &Context, _data: T) -> AResult<T>;
+    fn map(&self, ctx: &RefCell<Context>, _data: T) -> AResult<T>;
 
-//    fn with<F>(&self, ctx: &Context, cb: F) -> AResult<T>
-//    where
-//        F: FnOnce() -> T, T: std::fmt::Debug
-//    {
-//        let start = Instant::now();
-//        let r = cb();
-//        let start2 = Instant::now();
-//        let result = self.map(ctx, &r)?;
-//        println!(
-//            "result: {:?}\ncb_time: {:?}\nmap_time: {:?}",
-//            result,
-//            start2.duration_since(start),
-//            Instant::now().duration_since(start2)
-//        );
-//        Ok(r)
-//    }
+    fn name(&self) -> String;
+
+    fn destination(&self) -> String;
+
+    fn is_critical(&self) -> bool {
+        false
+    }
 }
 
 #[derive(Debug)]
@@ -58,10 +51,10 @@ pub trait OEvent<T> {
 mod tests {
     use crate::{AResult, Context, Event, OEvent, OID};
 
-#[derive(Debug)]
-pub struct CreateUser {
-    phone: String,
-}
+    #[derive(Debug)]
+    pub struct CreateUser {
+        phone: String,
+    }
 
     impl Event<AResult<i32>> for CreateUser {
         fn map(&self, _ctx: &Context, _data: &AResult<i32>) -> AResult<serde_json::Value> {

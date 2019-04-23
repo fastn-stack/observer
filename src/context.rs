@@ -1,40 +1,33 @@
 use crate::event::Event;
 use crate::AResult;
-use chrono::Utc;
-use std::thread;
+use chrono::{DateTime, Utc};
 use serde::Serialize;
+use std::thread;
+use std::cell::RefCell;
 
+#[derive(Debug, Clone)]
 pub struct Context {
-    pub id: i32
+    pub key: String,
+    pub context_id: String,
+    pub frame: Frame,
 }
 
-pub fn observe<F,T>(ctx: &Context, event: T,closure: F) -> AResult<T>
-where F: FnOnce() -> AResult<T>, T: std::fmt::Debug + Event<T> + serde::Serialize + std::clone::Clone{
-    let start_ts = Utc::now();
-    thread::sleep_ms(1000);
-    let result = closure()?;
-
-    println!("{:?}",result);
-
-    let data_to_be_stroed = serde_json::to_value(event.map(ctx,result.clone()));
-
-    println!("{:?}",data_to_be_stroed);
-
-    let end_ts = Utc::now();
-    println!("{}",end_ts-start_ts);
-    Ok(result)
-
+#[derive(Debug, Clone)]
+pub struct Frame {
+    pub key: String,
+    pub frame_id: String,
+    pub breadcrumbs: Option<serde_json::Value>,
+    pub start_ts: DateTime<Utc>,
+    pub end_ts: Option<DateTime<Utc>>,
+    pub sub_frames: Vec<Frame>,
 }
 
+impl Context {
+    pub fn modify_context(ctx: &RefCell<Context>, new_frame: Frame) {
+        ctx.borrow_mut().frame = new_frame;
+    }
 
-//fn main() {
-//    let a = Context{
-//        id: 20
-//    };
-//    observe(&a, &a, ||{
-//        let b = Context{
-//            id: 40
-//        };
-//        Ok(b)
-//    });
-//}
+    pub fn modify_add(ctx: &RefCell<Context>, new_frame: Frame) {
+        ctx.borrow_mut().frame.sub_frames.push(new_frame)
+    }
+}
