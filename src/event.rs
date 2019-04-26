@@ -1,13 +1,23 @@
-use crate::context::Context;
+use crate::context::{Context, Frame, SFrame};
 use crate::AResult;
+use kafka::error::Error as KafkaError;
+use kafka::producer::{Producer, Record, RequiredAcks};
 use serde;
 use serde_json;
-use std::cell::RefCell;
-use std::collections::LinkedList;
+use std::fs::{create_dir, File};
+use std::io::Write;
+use std::path::Path;
+use std::time::Duration;
 use std::time::Instant;
 
-pub trait Event<T> {
-    fn map(&self, ctx: &RefCell<Context>, _data: T) -> AResult<T>;
+pub static LOCAL_FILE_SYSTEM_DIRECTORY: &str = "/Users/venkatesh/observer_files/";
+
+pub static KAFKA_TOPIC: &str = "my-topic";
+
+pub static KAFKA_BROKER: &str = "localhost:9092";
+
+pub trait Event<T, K> {
+    fn map(&self, ctx: &Context, _data: &AResult<T>) -> AResult<K>;
 
     fn name(&self) -> String;
 
@@ -16,6 +26,48 @@ pub trait Event<T> {
     fn is_critical(&self) -> bool {
         false
     }
+
+    fn save(&self, frame: Frame) -> AResult<()> {
+        if self.is_critical() {
+            //write it to the queue directly
+            let data = frame.get_data();
+            produce_message(
+                data.to_string().as_bytes(),
+                KAFKA_TOPIC,
+                vec![KAFKA_BROKER.to_string()],
+            );
+        } else {
+            //write it to local file system
+            let destination_folder =
+                LOCAL_FILE_SYSTEM_DIRECTORY.to_string() + self.destination().as_str();
+            if Path::new(destination_folder.as_str()).exists() {
+                let mut file =
+                    File::create(destination_folder + "/" + frame.get_key().as_str()).unwrap();
+                let data = frame.get_data();
+                file.write(data.to_string().as_bytes());
+            } else {
+                create_dir(destination_folder.clone());
+                let mut file =
+                    File::create(destination_folder + "/" + frame.get_key().as_str()).unwrap();
+                let data = frame.get_data();
+                file.write(data.to_string().as_bytes());
+            }
+        }
+        Ok(())
+    }
+}
+
+pub fn produce_message(data: &[u8], topic: &str, brokers: Vec<String>) -> Result<(), KafkaError> {
+    println!("About to publish a message at {:?} to: {}", brokers, topic);
+
+    let mut producer = Producer::from_hosts(brokers)
+        .with_ack_timeout(Duration::from_secs(1))
+        .with_required_acks(RequiredAcks::One)
+        .create()?;
+
+    producer.send(&Record::from_value(topic, data));
+
+    Ok(())
 }
 
 #[derive(Debug)]

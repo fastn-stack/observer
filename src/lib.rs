@@ -2,11 +2,14 @@ extern crate failure;
 extern crate serde;
 extern crate serde_json;
 
-use serde::ser::{Serialize, Serializer};
-
 pub mod context;
 pub mod event;
 pub mod observer;
+
+pub use crate::context::Context;
+pub use crate::event::{Event, OEvent, OID};
+
+use serde::ser::{Serialize, Serializer};
 
 pub type AResult<T> = Result<T, OError>;
 
@@ -23,5 +26,9 @@ impl Serialize for OError {
         serializer.serialize_some(self.into())
     }
 }
-pub use crate::context::Context;
-pub use crate::event::{Event, OEvent, OID};
+
+impl Clone for OError {
+    fn clone(&self) -> Self {
+        self.to_owned()
+    }
+}
