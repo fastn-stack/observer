@@ -5,7 +5,7 @@ use crate::queue::{
 };
 use crate::{AResult, OError};
 use chrono::{DateTime, Utc};
-use serde_derive::Deserialize;
+use serde_derive::{Serialize, Deserialize};
 use serde_json::json;
 use std::{
     cell::RefCell,
@@ -14,10 +14,11 @@ use std::{
     path::Path,
 };
 use uuid::Uuid;
+use serde::ser::Serialize;
 
 pub static LOCAL_FILE_SYSTEM_DIRECTORY: &str = "/Users/venkatesh/observer_files/";
 
-#[derive(Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct Context {
     key: String,
     context_id: String,
@@ -25,7 +26,7 @@ pub struct Context {
     frame: RefCell<Frame>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct Frame {
     key: String,
     frame_id: String,
@@ -35,7 +36,7 @@ pub struct Frame {
     sub_frames: Vec<Frame>,
 }
 
-#[derive(Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct SFrame {
     f_key: String,
     frame_id: String,
@@ -45,11 +46,11 @@ pub struct SFrame {
 }
 
 impl Context {
-    pub fn new(queue: QueueEnum) -> Context {
+    pub fn new(context_id: String, queue: QueueEnum) -> Context {
         let frame = Frame::new("main".to_string());
 
         Context {
-            context_id: "test_context".to_string(),
+            context_id,
             frame: RefCell::new(frame),
             key: Uuid::new_v4().to_string(),
             queue: QueueEnum::Kafka,
@@ -57,16 +58,13 @@ impl Context {
     }
 
     pub fn finalise(&self) {
-        self.frame.borrow_mut().end_ts = Some(Utc::now());
+        self.update_end_ts(Utc::now());
         let destination_folder = LOCAL_FILE_SYSTEM_DIRECTORY.to_string() + "context/";
-        if Path::new(destination_folder.as_str()).exists() {
-            let mut file = File::create(destination_folder + "/" + self.key.as_str()).unwrap();
-            file.write(format!("{:?}", self.clone()).as_bytes());
-        } else {
+        if !Path::new(destination_folder.as_str()).exists() {
             create_dir(destination_folder.clone());
-            let mut file = File::create(destination_folder + "/" + self.key.as_str()).unwrap();
-            file.write(format!("{:?}", self.clone()).as_bytes());
         }
+        let mut file = File::create(destination_folder + "/" + self.key.as_str()).unwrap();
+            file.write(self.get_data().as_bytes());
     }
 
     pub fn en_queue(&self, frame: Frame) {
@@ -80,16 +78,14 @@ impl Context {
 
         let destination_folder =
                     LOCAL_FILE_SYSTEM_DIRECTORY.to_string() + destination.as_str();
-        if Path::new(destination_folder.as_str()).exists() {
-            let mut file = File::create(destination_folder + "/" + frame.get_key().as_str()).unwrap();
-            let data = frame.get_data();
-            result = file.write(data.to_string().as_bytes());
-        } else {
+
+        if !Path::new(destination_folder.as_str()).exists() {
             create_dir(destination_folder.clone());
-            let mut file = File::create(destination_folder + "/" + frame.get_key().as_str()).unwrap();
+        }
+        let mut file = File::create(destination_folder + "/" + frame.get_key().as_str()).unwrap();
             let data = frame.get_data();
             result = file.write(data.to_string().as_bytes());
-        }
+
         if let Err(e) = result {
             println!("Error while saving on the local file system: {:?}",e);
         }
@@ -121,6 +117,10 @@ impl Context {
 
     pub fn update_breadcrumbs(&self, value: serde_json::value::Value) {
         self.frame.borrow_mut().breadcrumbs = Some(value);
+    }
+
+    pub fn get_data(&self) -> String {
+        serde_json::to_value(self.clone()).unwrap().to_string()
     }
 }
 

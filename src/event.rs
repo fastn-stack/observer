@@ -60,13 +60,21 @@ pub trait OEvent<T> {
 
 #[cfg(test)]
 mod tests {
-    use crate::event::LOCAL_FILE_SYSTEM_DIRECTORY;
-    use crate::observer::observe;
-    use crate::{AResult, Context, Event};
+    use crate::{
+        event::OEvent,
+        event::OID,
+        observer::observe,
+        AResult,
+        Context,
+        Event,
+        queue::QueueEnum
+    };
     use std::fs::File;
     use std::path::Path;
+    use chrono::Utc;
+    use serde_derive::Serialize;
 
-    #[derive(Debug)]
+    #[derive(Debug,Clone,Serialize)]
     pub struct CreateUser {
         phone: String,
     }
@@ -94,15 +102,17 @@ mod tests {
 
     #[test]
     fn context_data_test() {
-        let ctx = Context::new();
+        let ctx = Context::new(String::from("test_context"),QueueEnum::Kafka);
         let uuid = ctx.get_key();
         create_user(&ctx, "8888888888");
-        ctx.finalise();
+        ctx.update_end_ts(Utc::now());
 
-        let s = LOCAL_FILE_SYSTEM_DIRECTORY.to_string();
-        let mut file = File::open("foo.txt")?;
-        let mut contents = String::new();
-        file.read_to_string(&mut contents)?;
+        let data = ctx.get_data();
+        let context: Context  = serde_json::from_str(data.as_str()).unwrap();
+
+        assert_eq!(context.get_key(),uuid);
+        assert_eq!(context.get_queue(),QueueEnum::Kafka);
+        assert_eq!(context,ctx.clone());
     }
 
     #[derive(Debug)]
@@ -125,19 +135,5 @@ mod tests {
 
     fn create_policy(ctx: &Context, user_id: i32) -> AResult<i32> {
         CreatePolicy { user_id: 12345 }.with(ctx, || Ok(user_id * 2))?
-    }
-
-    #[test]
-    fn create_user_test() {
-        let ctx = Context {};
-        let user = create_user(&ctx, "hello").unwrap();
-        assert_eq!(user, 5);
-    }
-
-    #[test]
-    fn create_policy_test() {
-        let ctx = Context {};
-        let user = create_policy(&ctx, 2).unwrap();
-        assert_eq!(user, 4);
     }
 }

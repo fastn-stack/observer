@@ -10,7 +10,7 @@ use observer::{context::Context, observer::observe, AResult};
 
 // run this one to see the example ``
 fn main() {
-    let ctx = Context::new(QueueEnum::Kafka);
+    let ctx = Context::new(String::from("example_context"), QueueEnum::Kafka);
     observer_test(&ctx);
     policy_create(&ctx, String::from("2"), 200);
     ctx.finalise();
