@@ -1,17 +1,27 @@
-use crate::event::LOCAL_FILE_SYSTEM_DIRECTORY;
+use crate::kafka_queue::KafkaQueue;
+use crate::queue::{
+    Queue,
+    QueueEnum::{self, Kafka},
+};
+use crate::{AResult, OError};
 use chrono::{DateTime, Utc};
 use serde_derive::Deserialize;
 use serde_json::json;
-use std::cell::RefCell;
-use std::fs::{create_dir, File};
-use std::io::Write;
-use std::path::Path;
+use std::{
+    cell::RefCell,
+    fs::{create_dir, File},
+    io::Write,
+    path::Path,
+};
 use uuid::Uuid;
+
+pub static LOCAL_FILE_SYSTEM_DIRECTORY: &str = "/Users/venkatesh/observer_files/";
 
 #[derive(Debug, Clone)]
 pub struct Context {
     key: String,
     context_id: String,
+    queue: QueueEnum,
     frame: RefCell<Frame>,
 }
 
@@ -35,20 +45,14 @@ pub struct SFrame {
 }
 
 impl Context {
-    pub fn new() -> Context {
-        let uuid = Uuid::new_v4();
-        let frame = Frame {
-            key: uuid.to_string(),
-            frame_id: "main".to_string(),
-            breadcrumbs: None,
-            start_ts: Utc::now(),
-            end_ts: None,
-            sub_frames: vec![],
-        };
+    pub fn new(queue: QueueEnum) -> Context {
+        let frame = Frame::new("main".to_string());
+
         Context {
             context_id: "test_context".to_string(),
             frame: RefCell::new(frame),
-            key: uuid.to_string(),
+            key: Uuid::new_v4().to_string(),
+            queue: QueueEnum::Kafka,
         }
     }
 
@@ -65,6 +69,32 @@ impl Context {
         }
     }
 
+    pub fn en_queue(&self, frame: Frame) {
+        match self.queue {
+            Kafka => KafkaQueue::new().en_queue(frame),
+        }
+    }
+
+    pub fn save_on_local(&self, destination: String, frame: Frame) {
+        let mut result;
+
+        let destination_folder =
+                    LOCAL_FILE_SYSTEM_DIRECTORY.to_string() + destination.as_str();
+        if Path::new(destination_folder.as_str()).exists() {
+            let mut file = File::create(destination_folder + "/" + frame.get_key().as_str()).unwrap();
+            let data = frame.get_data();
+            result = file.write(data.to_string().as_bytes());
+        } else {
+            create_dir(destination_folder.clone());
+            let mut file = File::create(destination_folder + "/" + frame.get_key().as_str()).unwrap();
+            let data = frame.get_data();
+            result = file.write(data.to_string().as_bytes());
+        }
+        if let Err(e) = result {
+            println!("Error while saving on the local file system: {:?}",e);
+        }
+    }
+
     pub fn modify_context(&self, new_frame: Frame) {
         self.frame.replace(new_frame);
     }
@@ -73,8 +103,16 @@ impl Context {
         self.frame.borrow_mut().sub_frames.push(new_frame)
     }
 
+    pub fn get_key(&self) -> String {
+        self.clone().key
+    }
+
     pub fn get_frame(&self) -> RefCell<Frame> {
         self.clone().frame
+    }
+
+    pub fn get_queue(&self) -> QueueEnum {
+        self.clone().queue
     }
 
     pub fn update_end_ts(&self, end_ts: DateTime<Utc>) {

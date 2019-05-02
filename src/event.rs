@@ -1,20 +1,20 @@
-use crate::context::{Context, Frame, SFrame};
-use crate::AResult;
-use kafka::error::Error as KafkaError;
-use kafka::producer::{Producer, Record, RequiredAcks};
+use crate::{
+    context::{Context, Frame, SFrame},
+    AResult,
+};
+use kafka::{
+    error::Error as KafkaError,
+    producer::{Producer, Record, RequiredAcks},
+};
 use serde;
 use serde_json;
-use std::fs::{create_dir, File};
-use std::io::Write;
-use std::path::Path;
-use std::time::Duration;
-use std::time::Instant;
-
-pub static LOCAL_FILE_SYSTEM_DIRECTORY: &str = "/Users/venkatesh/observer_files/";
-
-pub static KAFKA_TOPIC: &str = "my-topic";
-
-pub static KAFKA_BROKER: &str = "localhost:9092";
+use std::{
+    fs::{create_dir, File},
+    io::Write,
+    path::Path,
+    time::Duration,
+    time::Instant,
+};
 
 pub trait Event<T, K> {
     fn map(&self, ctx: &Context, _data: &AResult<T>) -> AResult<K>;
@@ -27,47 +27,6 @@ pub trait Event<T, K> {
         false
     }
 
-    fn save(&self, frame: Frame) -> AResult<()> {
-        if self.is_critical() {
-            //write it to the queue directly
-            let data = frame.get_data();
-            produce_message(
-                data.to_string().as_bytes(),
-                KAFKA_TOPIC,
-                vec![KAFKA_BROKER.to_string()],
-            );
-        } else {
-            //write it to local file system
-            let destination_folder =
-                LOCAL_FILE_SYSTEM_DIRECTORY.to_string() + self.destination().as_str();
-            if Path::new(destination_folder.as_str()).exists() {
-                let mut file =
-                    File::create(destination_folder + "/" + frame.get_key().as_str()).unwrap();
-                let data = frame.get_data();
-                file.write(data.to_string().as_bytes());
-            } else {
-                create_dir(destination_folder.clone());
-                let mut file =
-                    File::create(destination_folder + "/" + frame.get_key().as_str()).unwrap();
-                let data = frame.get_data();
-                file.write(data.to_string().as_bytes());
-            }
-        }
-        Ok(())
-    }
-}
-
-pub fn produce_message(data: &[u8], topic: &str, brokers: Vec<String>) -> Result<(), KafkaError> {
-    println!("About to publish a message at {:?} to: {}", brokers, topic);
-
-    let mut producer = Producer::from_hosts(brokers)
-        .with_ack_timeout(Duration::from_secs(1))
-        .with_required_acks(RequiredAcks::One)
-        .create()?;
-
-    producer.send(&Record::from_value(topic, data));
-
-    Ok(())
 }
 
 #[derive(Debug)]
@@ -101,23 +60,49 @@ pub trait OEvent<T> {
 
 #[cfg(test)]
 mod tests {
-    use crate::{AResult, Context, Event, OEvent, OID};
+    use crate::event::LOCAL_FILE_SYSTEM_DIRECTORY;
+    use crate::observer::observe;
+    use crate::{AResult, Context, Event};
+    use std::fs::File;
+    use std::path::Path;
 
     #[derive(Debug)]
     pub struct CreateUser {
         phone: String,
     }
 
-    impl Event<AResult<i32>> for CreateUser {
-        fn map(&self, _ctx: &Context, _data: &AResult<i32>) -> AResult<serde_json::Value> {
-            Ok(serde_json::Value::Null)
+    impl Event<CreateUser, CreateUser> for CreateUser {
+        fn map(&self, _ctx: &Context, _data: &AResult<CreateUser>) -> AResult<CreateUser> {
+            Ok(_data.clone().unwrap())
+        }
+
+        fn name(&self) -> String {
+            "CreateUser".to_string()
+        }
+
+        fn destination(&self) -> String {
+            "create_user".to_string()
         }
     }
-    fn create_user(ctx: &Context, phone: &str) -> AResult<i32> {
-        CreateUser {
+    fn create_user(ctx: &Context, phone: &str) -> AResult<CreateUser> {
+        let user = CreateUser {
             phone: phone.to_string(),
-        }
-        .with(ctx, || Ok(phone.len() as i32))?
+        };
+
+        observe(ctx, user.clone(), || Ok(user))
+    }
+
+    #[test]
+    fn context_data_test() {
+        let ctx = Context::new();
+        let uuid = ctx.get_key();
+        create_user(&ctx, "8888888888");
+        ctx.finalise();
+
+        let s = LOCAL_FILE_SYSTEM_DIRECTORY.to_string();
+        let mut file = File::open("foo.txt")?;
+        let mut contents = String::new();
+        file.read_to_string(&mut contents)?;
     }
 
     #[derive(Debug)]

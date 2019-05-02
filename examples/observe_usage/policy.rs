@@ -1,8 +1,6 @@
 extern crate observer;
 use chrono::{DateTime, Utc};
-use observer::context::Context;
-use observer::event::Event;
-use observer::AResult;
+use observer::{context::Context, event::Event, AResult};
 use serde_derive::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

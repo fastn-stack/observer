@@ -1,8 +1,6 @@
-use crate::context::Context;
-use crate::context::Frame;
-use crate::event::Event;
-use crate::AResult;
-use crate::OError;
+use crate::{
+    context::Context, context::Frame, event::Event, queue::QueueEnum::Kafka, AResult, OError,
+};
 use chrono::Utc;
 
 pub fn observe<F, T, K>(ctx: &Context, event: T, closure: F) -> AResult<T>
@@ -23,10 +21,14 @@ where
     ctx.update_breadcrumbs(serde_json::to_value(event.map(ctx, &result)).unwrap());
 
     let temp2 = ctx.get_frame().into_inner();
-    event.save(temp2.clone());
+    if event.is_critical() {
+        ctx.en_queue(temp2.clone());
+    } else {
+        ctx.save_on_local(event.destination(),temp2.clone());
+    }
 
     ctx.modify_context(temp1.into_inner());
     ctx.modify_add(temp2);
 
-    Ok(result?)
+    result
 }

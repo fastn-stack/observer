@@ -3,16 +3,14 @@ extern crate uuid;
 mod policy;
 mod user_id;
 
-use crate::policy::Policy;
-use crate::user_id::UserId;
-use chrono::offset::TimeZone;
-use chrono::Utc;
-use observer::context::Context;
-use observer::observer::observe;
-use observer::AResult;
+use crate::{policy::Policy, user_id::UserId};
+use chrono::{offset::TimeZone, Utc};
+use observer::queue::QueueEnum;
+use observer::{context::Context, observer::observe, AResult};
 
+// run this one to see the example ``
 fn main() {
-    let ctx = Context::new();
+    let ctx = Context::new(QueueEnum::Kafka);
     observer_test(&ctx);
     policy_create(&ctx, String::from("2"), 200);
     ctx.finalise();

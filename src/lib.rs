@@ -4,7 +4,9 @@ extern crate serde_json;
 
 pub mod context;
 pub mod event;
+pub mod kafka_queue;
 pub mod observer;
+pub mod queue;
 
 pub use crate::context::Context;
 pub use crate::event::{Event, OEvent, OID};
