@@ -1,13 +1,12 @@
 use chrono::Utc;
-use crate::{context::Context, context::Frame, event::Event, AResult, OError};
+use crate::{context::Context, event::Event, frame::Frame, Result};
 
-pub fn observe<F, T, K>(ctx: &Context, event: T, closure: F) -> AResult<T>
+pub fn observe<F, T, E>(ctx: &Context, closure: F) -> Result<T>
 where
-    F: FnOnce() -> AResult<T>,
-    K: serde::Serialize,
-    T: std::fmt::Debug + Event<T, K> + serde::Serialize + std::clone::Clone,
-    std::result::Result<T, OError>: std::clone::Clone,
+    F: FnOnce() -> Result<(T, E)>,
+    T: std::fmt::Debug + Event<T, E> + serde::Serialize,
 {
+    /*
     let new_frame = Frame::new(event.name());
     let temp1 = ctx.get_frame();
 
@@ -20,7 +19,7 @@ where
 
     let temp2 = ctx.get_frame().into_inner();
     if event.is_critical() {
-        ctx.en_queue(temp2.clone());
+        ctx.enqueue(temp2.clone());
     } else {
         ctx.save_on_local(event.destination(), temp2.clone());
     }
@@ -29,4 +28,6 @@ where
     ctx.modify_add(temp2);
 
     result
+    */
+    unimplemented!()
 }

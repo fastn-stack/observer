@@ -13,7 +13,7 @@ pub static KAFKA_BROKER: &str = "localhost:9092";
 pub struct KafkaQueue {}
 
 impl Queue for KafkaQueue {
-    fn en_queue(self, frame: Frame) {
+    fn enqueue(self, frame: Frame) {
         let data = frame.get_data();
         let result = produce_message(
             data.to_string().as_bytes(),

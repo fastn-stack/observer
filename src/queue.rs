@@ -1,11 +1,6 @@
-use crate::context::Frame;
-use serde_derive::{Deserialize, Serialize};
+use crate::frame::Frame;
+use std::fmt::Debug;
 
-pub trait Queue {
-    fn en_queue(self, frame: Frame);
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
-pub enum QueueEnum {
-    Kafka,
+pub trait Queue: Debug {
+    fn enqueue(self, frame: Frame);
 }

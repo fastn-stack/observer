@@ -1,15 +1,22 @@
-use crate::{context::Context, AResult};
+use crate::{context::Context, Result};
 use std::time::Instant;
 
 pub trait Event<T, K> {
-    fn map(&self, ctx: &Context, _data: &AResult<T>) -> AResult<K>;
-
-    fn name(&self) -> String;
-
-    fn destination(&self) -> String;
-
+    fn map(&self, ctx: &Context, data: &Result<(T, K)>) -> Result<serde_json::Value>;
     fn is_critical(&self) -> bool {
         false
+    }
+}
+
+impl<T, K> Event<T, K> for T
+where
+    K: serde::Serialize,
+{
+    fn map(&self, ctx: &Context, data: &Result<(T, K)>) -> Result<serde_json::Value> {
+        match data {
+            Ok((_data, event)) => Ok(serde_json::to_value(event)?),
+            Err(e) => Ok(serde_json::Value::String(format!("{}", e))),
+        }
     }
 }
 
@@ -20,10 +27,10 @@ pub struct OID {
 }
 
 pub trait OEvent<T> {
-    fn map(&self, in_: &Context, data: &T) -> AResult<serde_json::Value>;
+    fn map(&self, in_: &Context, data: &T) -> Result<serde_json::Value>;
     fn oid(&self, data: &T) -> OID;
 
-    fn with<F>(&self, ctx: &Context, cb: F) -> AResult<T>
+    fn with<F>(&self, ctx: &Context, cb: F) -> Result<T>
     where
         F: FnOnce() -> T,
     {
@@ -46,7 +53,7 @@ pub trait OEvent<T> {
 mod tests {
     use chrono::Utc;
     use crate::{
-        event::OEvent, event::OID, observer::observe, queue::QueueEnum, AResult, Context, Event,
+        event::OEvent, event::OID, observer::observe, queue::QueueEnum, Context, Event, Result,
     };
     use serde_derive::Serialize;
     use std::fs::File;
@@ -58,7 +65,7 @@ mod tests {
     }
 
     impl Event<CreateUser, CreateUser> for CreateUser {
-        fn map(&self, _ctx: &Context, _data: &AResult<CreateUser>) -> AResult<CreateUser> {
+        fn map(&self, _ctx: &Context, _data: &Result<CreateUser>) -> Result<CreateUser> {
             Ok(_data.clone().unwrap())
         }
 
@@ -70,7 +77,7 @@ mod tests {
             "create_user".to_string()
         }
     }
-    fn create_user(ctx: &Context, phone: &str) -> AResult<CreateUser> {
+    fn create_user(ctx: &Context, phone: &str) -> Result<CreateUser> {
         let user = CreateUser {
             phone: phone.to_string(),
         };
@@ -98,12 +105,12 @@ mod tests {
         user_id: i32,
     }
 
-    impl OEvent<AResult<i32>> for CreatePolicy {
-        fn map(&self, _ctx: &Context, _data: &AResult<i32>) -> AResult<serde_json::Value> {
+    impl OEvent<Result<i32>> for CreatePolicy {
+        fn map(&self, _ctx: &Context, _data: &Result<i32>) -> Result<serde_json::Value> {
             Ok(serde_json::Value::Null)
         }
 
-        fn oid(&self, _data: &AResult<i32>) -> OID {
+        fn oid(&self, _data: &Result<i32>) -> OID {
             OID {
                 oid: "policy_oid".to_string(),
                 okind: "policy_oid".to_string(),
@@ -111,7 +118,7 @@ mod tests {
         }
     }
 
-    fn create_policy(ctx: &Context, user_id: i32) -> AResult<i32> {
+    fn create_policy(ctx: &Context, user_id: i32) -> Result<i32> {
         CreatePolicy { user_id: 12345 }.with(ctx, || Ok(user_id * 2))?
     }
 }

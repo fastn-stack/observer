@@ -1,0 +1,8 @@
+[package]
+name = "observer_kafka"
+version = "0.1.0"
+authors = ["Amit Upadhyay <code@amitu.com>"]
+edition = "2018"
+
+[dependencies]
+observer = "~1.0.27"
