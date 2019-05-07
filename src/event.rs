@@ -26,7 +26,6 @@ pub trait Event<T, K> {
     fn is_critical(&self) -> bool {
         false
     }
-
 }
 
 #[derive(Debug)]
@@ -60,21 +59,15 @@ pub trait OEvent<T> {
 
 #[cfg(test)]
 mod tests {
+    use chrono::Utc;
     use crate::{
-        event::OEvent,
-        event::OID,
-        observer::observe,
-        AResult,
-        Context,
-        Event,
-        queue::QueueEnum
+        event::OEvent, event::OID, observer::observe, queue::QueueEnum, AResult, Context, Event,
     };
+    use serde_derive::Serialize;
     use std::fs::File;
     use std::path::Path;
-    use chrono::Utc;
-    use serde_derive::Serialize;
 
-    #[derive(Debug,Clone,Serialize)]
+    #[derive(Debug, Clone, Serialize)]
     pub struct CreateUser {
         phone: String,
     }
@@ -102,17 +95,17 @@ mod tests {
 
     #[test]
     fn context_data_test() {
-        let ctx = Context::new(String::from("test_context"),QueueEnum::Kafka);
+        let ctx = Context::new(String::from("test_context"), QueueEnum::Kafka);
         let uuid = ctx.get_key();
         create_user(&ctx, "8888888888");
         ctx.update_end_ts(Utc::now());
 
         let data = ctx.get_data();
-        let context: Context  = serde_json::from_str(data.as_str()).unwrap();
+        let context: Context = serde_json::from_str(data.as_str()).unwrap();
 
-        assert_eq!(context.get_key(),uuid);
-        assert_eq!(context.get_queue(),QueueEnum::Kafka);
-        assert_eq!(context,ctx.clone());
+        assert_eq!(context.get_key(), uuid);
+        assert_eq!(context.get_queue(), QueueEnum::Kafka);
+        assert_eq!(context, ctx.clone());
     }
 
     #[derive(Debug)]
