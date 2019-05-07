@@ -3,9 +3,23 @@ use crate::{context::Context, event::Event, frame::Frame, Result};
 
 pub fn observe<F, T, E>(ctx: &Context, closure: F) -> Result<T>
 where
-    F: FnOnce() -> Result<(T, E)>,
+    F: FnOnce() -> std::result::Result<(T, E), (failure::Error, E)>,
     T: std::fmt::Debug + Event<T, E> + serde::Serialize,
 {
+    unimplemented!()
+    /*
+    ctx.start_frame();
+    match closure() {
+        Ok((res, evt)) => {
+            ctx.end_frame_success(evt);
+            Ok(res)
+        }
+        Err((e, evt)) => {
+            ctx.end_frame_error(e, evt);
+            Err(e)
+        }
+    }
+    */
     /*
     let new_frame = Frame::new(event.name());
     let temp1 = ctx.get_frame();
@@ -29,5 +43,4 @@ where
 
     result
     */
-    unimplemented!()
 }

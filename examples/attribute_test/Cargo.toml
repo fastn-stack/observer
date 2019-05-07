@@ -1,0 +1,18 @@
+[package]
+name = "attribute_test"
+version = "0.1.0"
+authors = ["Amit Upadhyay <code@amitu.com>"]
+edition = "2018"
+
+[dependencies]
+
+[dev-dependencies.compiletest_rs]
+version = "~0.3.22"
+features = ["tmp"]
+
+[dependencies.balanced_trees]
+path = "../../examples/balanced_trees"
+version = "0.1.0"
+
+[features]
+stable = ["compiletest_rs/stable"]
