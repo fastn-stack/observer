@@ -1,0 +1,19 @@
+[package]
+name = "observe_usage"
+version = "0.0.0"
+authors = ["Amit Upadhyay <upadhyay@gmail.com>"]
+publish = false
+edition = "2018"
+
+[dependencies]
+serde_json = "~1"
+serde_derive = "~1"
+serde = "~1"
+uuid = { version = "0.7", features = ["serde", "v4"] }
+
+[dependencies.observer]
+path = "../.."
+
+[dependencies.chrono]
+version = "0.4"
+features = ["serde"]
