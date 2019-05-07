@@ -1,7 +1,5 @@
 use crate::context::Context;
 use crate::AResult;
-use serde;
-use serde_json;
 use std::time::Instant;
 
 pub trait Event<T> {
@@ -71,8 +69,7 @@ mod tests {
     fn create_user(ctx: &Context, phone: &str) -> AResult<i32> {
         CreateUser {
             phone: phone.to_string(),
-        }
-        .with(ctx, || Ok(phone.len() as i32))?
+        }.with(ctx, || Ok(phone.len() as i32))?
     }
 
     #[derive(Debug)]
