@@ -1,7 +1,3 @@
-extern crate failure;
-extern crate serde;
-extern crate serde_json;
-
 pub mod context;
 pub mod event;
 pub mod kafka_queue;

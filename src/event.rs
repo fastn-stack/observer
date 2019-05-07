@@ -1,20 +1,5 @@
-use crate::{
-    context::{Context, Frame, SFrame},
-    AResult,
-};
-use kafka::{
-    error::Error as KafkaError,
-    producer::{Producer, Record, RequiredAcks},
-};
-use serde;
-use serde_json;
-use std::{
-    fs::{create_dir, File},
-    io::Write,
-    path::Path,
-    time::Duration,
-    time::Instant,
-};
+use crate::{context::Context, AResult};
+use std::time::Instant;
 
 pub trait Event<T, K> {
     fn map(&self, ctx: &Context, _data: &AResult<T>) -> AResult<K>;

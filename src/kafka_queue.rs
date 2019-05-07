@@ -1,12 +1,10 @@
 use crate::context::Frame;
 use crate::queue::Queue;
-use crate::{AResult, Context, OError};
 use kafka::{
     error::Error as KafkaError,
     producer::{Producer, Record, RequiredAcks},
 };
 use std::time::Duration;
-use std::error::Error;
 
 pub static KAFKA_TOPIC: &str = "my-topic";
 
@@ -23,7 +21,7 @@ impl Queue for KafkaQueue {
             vec![KAFKA_BROKER.to_string()],
         );
         if let Err(e) = result {
-            println!("Error while sending message to kafka queue: {:?}",e);
+            println!("Error while sending message to kafka queue: {:?}", e);
         }
     }
 }

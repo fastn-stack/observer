@@ -1,11 +1,10 @@
+use chrono::{DateTime, Utc};
 use crate::kafka_queue::KafkaQueue;
 use crate::queue::{
     Queue,
     QueueEnum::{self, Kafka},
 };
-use crate::{AResult, OError};
-use chrono::{DateTime, Utc};
-use serde_derive::{Serialize, Deserialize};
+use serde_derive::{Deserialize, Serialize};
 use serde_json::json;
 use std::{
     cell::RefCell,
@@ -14,7 +13,6 @@ use std::{
     path::Path,
 };
 use uuid::Uuid;
-use serde::ser::Serialize;
 
 pub static LOCAL_FILE_SYSTEM_DIRECTORY: &str = "/Users/venkatesh/observer_files/";
 
@@ -46,7 +44,7 @@ pub struct SFrame {
 }
 
 impl Context {
-    pub fn new(context_id: String, queue: QueueEnum) -> Context {
+    pub fn new(context_id: String, _queue: QueueEnum) -> Context {
         let frame = Frame::new("main".to_string());
 
         Context {
@@ -61,10 +59,10 @@ impl Context {
         self.update_end_ts(Utc::now());
         let destination_folder = LOCAL_FILE_SYSTEM_DIRECTORY.to_string() + "context/";
         if !Path::new(destination_folder.as_str()).exists() {
-            create_dir(destination_folder.clone());
+            create_dir(destination_folder.clone()).unwrap(); // TODO
         }
         let mut file = File::create(destination_folder + "/" + self.key.as_str()).unwrap();
-            file.write(self.get_data().as_bytes());
+        file.write(self.get_data().as_bytes()).unwrap(); // TODO
     }
 
     pub fn en_queue(&self, frame: Frame) {
@@ -76,18 +74,17 @@ impl Context {
     pub fn save_on_local(&self, destination: String, frame: Frame) {
         let mut result;
 
-        let destination_folder =
-                    LOCAL_FILE_SYSTEM_DIRECTORY.to_string() + destination.as_str();
+        let destination_folder = LOCAL_FILE_SYSTEM_DIRECTORY.to_string() + destination.as_str();
 
         if !Path::new(destination_folder.as_str()).exists() {
-            create_dir(destination_folder.clone());
+            create_dir(destination_folder.clone()).unwrap(); // TODO
         }
         let mut file = File::create(destination_folder + "/" + frame.get_key().as_str()).unwrap();
-            let data = frame.get_data();
-            result = file.write(data.to_string().as_bytes());
+        let data = frame.get_data();
+        result = file.write(data.to_string().as_bytes());
 
         if let Err(e) = result {
-            println!("Error while saving on the local file system: {:?}",e);
+            println!("Error while saving on the local file system: {:?}", e);
         }
     }
 
