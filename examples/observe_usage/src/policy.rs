@@ -46,8 +46,7 @@ impl Policy {
     //            ctx.observe_str("old_name", &p.name);
     //
     //            p.name = name.into();
-    //
-    //            Ok(p)
+    //            p.create().observe(|p| p.id)
     //        }
     //    }
 
