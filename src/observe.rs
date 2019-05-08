@@ -1,5 +1,5 @@
-use chrono::Utc;
 use crate::{context::Context, event::Event, frame::Frame, Result};
+use chrono::Utc;
 
 pub fn observe<F, T, E>(ctx: &Context, closure: F) -> Result<T>
 where

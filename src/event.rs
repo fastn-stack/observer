@@ -51,10 +51,10 @@ pub trait OEvent<T> {
 
 #[cfg(test)]
 mod tests {
-    use chrono::Utc;
     use crate::{
         event::OEvent, event::OID, observer::observe, queue::QueueEnum, Context, Event, Result,
     };
+    use chrono::Utc;
     use serde_derive::Serialize;
     use std::fs::File;
     use std::path::Path;

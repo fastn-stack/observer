@@ -17,3 +17,7 @@ path = "../.."
 [dependencies.chrono]
 version = "0.4"
 features = ["serde"]
+
+[dependencies.balanced_trees]
+path = "../../examples/balanced_trees"
+version = "0.1.0"

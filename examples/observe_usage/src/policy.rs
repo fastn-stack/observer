@@ -17,42 +17,54 @@ impl Policy {
         })
     }
 
+    #[observed]
     pub fn create_policy(ctx: &Context, name: &str) -> Result<Policy> {
-        observe(ctx, || {
-            let policy = Policy {
-                id: "".into(),
-                name: name.into(),
-                updated_on: Utc::now(),
-            };
-            Ok((policy.clone(), policy))
-        })
+        let policy = Policy {
+            id: "1".into(),
+            name: name.into(),
+            updated_on: Utc::now(),
+        };
+        Ok(policy)
     }
 
-    #[observed("policy_name_changed:critical")]
-    pub fn change_name(ctx: &Context, pid: &str, name: &str) -> Result<Policy> {
-        let mut p = Policy::get_by_id(pid)?;
+    //    #[observed("policy_name_changed:critical")]
+    //    pub fn change_name(ctx: &Context, pid: &str, name: &str) -> Result<Policy> {
+    //        let mut p = Policy::get_by_id(pid)?;
+    //
+    //        observe!(ctx, "pid", pid);
+    //        observe!(ctx, "old_name", &p.name);
+    //
+    //        p.name = name.into();
+    //
+    //        observe_success!(ctx, p.id); // or observe_failure!(ctx, error_message)
+    //        Ok(p)
+    //    }
 
-        observe!(ctx, "pid", pid);
-        observe!(ctx, "old_name", &p.name);
+    //    pub fn change_name(ctx: &Context, pid: &str, name: &str) -> Result<Policy> {
+    //        observe(ctx, "policy_name_changed::critical", || {
+    //            let mut p = Policy::get_by_id(pid)?;
+    //
+    //            ctx.observe_i32("pid", pid);
+    //            ctx.observe_str("old_name", &p.name);
+    //
+    //            p.name = name.into();
+    //
+    //            Ok(p)
+    //        }
+    //    }
 
-        p.name = name.into();
-
-        observe_success!(ctx, p.id); // or observe_failure!(ctx, error_message)
-        Ok(p)
-    }
-
-    pub fn change_name(ctx: &Context, pid: &str, name: &str) -> Result<Policy> {
-        observe(ctx, "policy_name_changed::critical", || {
-            let mut p = Policy::get_by_id(pid)?;
-
-            ctx.observe_i32("pid", pid);
-            ctx.observe_str("old_name", &p.name);
-
-            p.name = name.into();
-
-            Ok(p)
-        }
-    }
+    //    pub fn change_name(ctx: &Context, pid: &str, name: &str) -> Result<Policy> {
+    //        || {
+    //            let mut p = Policy::get_by_id(pid)?;
+    //
+    //            ctx.observe_i32("pid", pid);
+    //            ctx.observe_str("old_name", &p.name);
+    //
+    //            p.name = name.into();
+    //
+    //            Ok(p)
+    //        }
+    //    }
 
     /*
     {
