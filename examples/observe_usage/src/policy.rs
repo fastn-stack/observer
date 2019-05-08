@@ -17,7 +17,7 @@ impl Policy {
         })
     }
 
-    #[observed]
+    #[observed("policy_name_changed:critical")]
     pub fn create_policy(ctx: &Context, name: &str) -> Result<Policy> {
         let policy = Policy {
             id: "1".into(),

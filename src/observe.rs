@@ -1,10 +1,10 @@
 use crate::{context::Context, event::Event, frame::Frame, Result};
 use chrono::Utc;
 
-pub fn observe<F, T, E>(ctx: &Context, closure: F) -> Result<T>
+pub fn observe<F,T>(ctx: &Context, table_name: &str, is_critical: bool, closure: F) -> Result<T>
 where
-    F: FnOnce() -> std::result::Result<(T, E), (failure::Error, E)>,
-    T: std::fmt::Debug + Event<T, E> + serde::Serialize,
+    F: FnOnce() -> std::result::Result<T, failure::Error>,
+    T: std::fmt::Debug + serde::Serialize,
 {
     unimplemented!()
     /*

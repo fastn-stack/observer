@@ -5,6 +5,46 @@ extern crate syn;
 #[macro_use]
 extern crate quote;
 
+
+/*
+
+Plan:
+
+-- poc / first publish to crate
+
+0. rename crate: on top level in this repo (instead of examples folder), observer_attribute
+1. Event struct, lazy_static stuff to load. verify lazy_static is really lazy_static, meaning
+   use the macro twice and ensure lazy_static init code is executed only once. get json file name
+   via env variable.
+   {
+    "event_id": {
+        "critical": bool, // optional
+        "fields": {
+            "name": "String"
+        }
+    }
+   }
+3. Context.observe_i32(), Context.observe_string()
+4. rewrite: observe!(name, value) -> observe_<field_type>(ctx, name, value)
+5. fix frame stuff that we commented out
+6. dummy_queue implementation (for testing, tutorial etc)
+
+-- production ready
+
+1. observer_kafka crate
+2. observer_kinesis crate
+3. file to queue local service
+4. handler trait
+5. handler triat impl for BigQuery
+
+-- later
+
+- check_pr to check json file from repo is diff from prod
+- FieldType enum is specific to BigQuery, but someone may want to use a different store, eg pgsql,
+  which has fields like geo, or date range etc. we will have a feature, which can be used to decide
+  exactly what all variants based of active feature.
+
+*/
 use proc_macro::TokenStream;
 use syn::{Item, Expr::{Closure}, Expr, punctuated::Punctuated};
 use syn::token::Or;
@@ -71,9 +111,28 @@ fn log(msg: &str,path: &str) {
     file.write_all("\n".as_bytes()).unwrap();
 }
 
+enum FieldType {
+    Integer,
+    String
+}
+
+
+struct Event {
+    name: String,
+    critical: bool,
+    fields: HashMap<String, FieldType>
+}
+
+const events: HashMap<String, Event> = vec![];
+
 #[proc_macro_attribute]
-pub fn observed(_metadata: TokenStream, input: TokenStream) -> TokenStream {
-    log(&format!("{:#?}", input),"/tmp/log1.txt");
+pub fn observed(metadata: TokenStream, input: TokenStream) -> TokenStream {
+    log(&format!("{}", metadata.to_string()),"/tmp/log1.txt");
+
+    validate(metadata.to_string());
+
+    let table_name = get_table_name(metadata.to_string());
+    let is_critical = is_critical(metadata.to_string());
 
     let item: syn::Item = syn::parse(input).expect("failed to parse input");
     /*
@@ -87,19 +146,37 @@ pub fn observed(_metadata: TokenStream, input: TokenStream) -> TokenStream {
     let ident = f.ident;
     let inputs = f.decl.inputs;
     let output = f.decl.output;
-    let block = f.block;
+    let block = rewrite(f.block);
 
     let output = quote!{
         #vis fn #ident(#inputs) #output {
-            let _realm_c = || {
+            ctx.observe(ctx, #table_name, #is_critical, || {
                 #block
-            };
-            _realm_c()
+            })
         }
     };
     log(&format!("{}", output.to_string()),"/tmp/log3.txt");
     output.into()
 }
+
+//fn validate(metadata: String) {
+//    if false {
+//        panic!();
+//    }
+//}
+//
+//fn get_table_name(metadata: String) -> String{
+//    metadata.split(":").collect::<Vec<String>>()[0]
+//}
+//
+//fn is_critical(metadata: String) -> bool {
+//    let v: Vec<&str> = metadata.split(":").collect();
+//    v.contains("critical")
+//
+//    let a = vec![];
+//
+//}
+
 
 fn func_to_clousre(func: &syn::ItemFn) -> syn::Expr {
     let body = func.block.clone();
