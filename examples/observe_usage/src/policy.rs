@@ -31,13 +31,11 @@ impl Policy {
     //    pub fn change_name(ctx: &Context, pid: &str, name: &str) -> Result<Policy> {
     //        let mut p = Policy::get_by_id(pid)?;
     //
-    //        observe!(ctx, "pid", pid);
-    //        observe!(ctx, "old_name", &p.name);
+    //        observe!("pid", pid);
+    //        observe!("old_name", &p.name);
     //
     //        p.name = name.into();
-    //
-    //        observe_success!(ctx, p.id); // or observe_failure!(ctx, error_message)
-    //        Ok(p)
+    //        p.create().observe(|p| p.id)
     //    }
 
     //    pub fn change_name(ctx: &Context, pid: &str, name: &str) -> Result<Policy> {
