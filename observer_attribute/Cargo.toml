@@ -1,5 +1,5 @@
 [package]
-name = "balanced_trees"
+name = "observer_attribute"
 version = "0.1.0"
 authors = ["Amit Upadhyay <code@amitu.com>"]
 edition = "2018"

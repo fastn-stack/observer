@@ -18,6 +18,6 @@ path = "../.."
 version = "0.4"
 features = ["serde"]
 
-[dependencies.balanced_trees]
-path = "../../examples/balanced_trees"
+[dependencies.observer_attribute]
+path = "../../observer_attribute"
 version = "0.1.0"

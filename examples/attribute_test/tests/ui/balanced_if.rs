@@ -1,5 +1,5 @@
 #[macro_use]
-extern crate balanced_trees;
+extern crate observer_attribute;
 
 #[balanced_if]
 fn main() {

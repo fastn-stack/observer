@@ -49,6 +49,7 @@ use proc_macro::TokenStream;
 use syn::{Item, Expr::{Closure}, Expr, punctuated::Punctuated};
 use syn::token::Or;
 use proc_macro2::Span;
+use std::collections::HashMap;
 
 
 fn log_simple(msg: &str) {
@@ -123,7 +124,7 @@ struct Event {
     fields: HashMap<String, FieldType>
 }
 
-const events: HashMap<String, Event> = vec![];
+//const events: HashMap<String, Event> = HashMap::new();
 
 #[proc_macro_attribute]
 pub fn observed(metadata: TokenStream, input: TokenStream) -> TokenStream {
@@ -132,7 +133,6 @@ pub fn observed(metadata: TokenStream, input: TokenStream) -> TokenStream {
     validate(metadata.to_string());
 
     let table_name = get_table_name(metadata.to_string());
-    let is_critical = is_critical(metadata.to_string());
 
     let item: syn::Item = syn::parse(input).expect("failed to parse input");
     /*
@@ -146,11 +146,12 @@ pub fn observed(metadata: TokenStream, input: TokenStream) -> TokenStream {
     let ident = f.ident;
     let inputs = f.decl.inputs;
     let output = f.decl.output;
-    let block = rewrite(f.block);
+    //let block = rewrite(f.block);
+    let block = f.block;
 
     let output = quote!{
         #vis fn #ident(#inputs) #output {
-            ctx.observe(ctx, #table_name, #is_critical, || {
+            observe(ctx, #table_name, || {
                 #block
             })
         }
@@ -159,24 +160,15 @@ pub fn observed(metadata: TokenStream, input: TokenStream) -> TokenStream {
     output.into()
 }
 
-//fn validate(metadata: String) {
-//    if false {
-//        panic!();
-//    }
-//}
-//
-//fn get_table_name(metadata: String) -> String{
-//    metadata.split(":").collect::<Vec<String>>()[0]
-//}
-//
-//fn is_critical(metadata: String) -> bool {
-//    let v: Vec<&str> = metadata.split(":").collect();
-//    v.contains("critical")
-//
-//    let a = vec![];
-//
-//}
+fn validate(metadata: String) {
+    if false {
+        panic!();
+    }
+}
 
+fn get_table_name(metadata: String) -> String{
+    metadata
+}
 
 fn func_to_clousre(func: &syn::ItemFn) -> syn::Expr {
     let body = func.block.clone();
