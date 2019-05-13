@@ -1,5 +1,6 @@
 use chrono::prelude::*;
-use observer::{observe, Context, Result};
+#[macro_use]
+use observer::{observe::{observe_field, observe, observe_fie}, context::observe_i32, Result, Context};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Policy {
@@ -17,19 +18,22 @@ impl Policy {
         })
     }
 
-    #[observed("policy_name_changed")]
+    #[observed(policy_name_changed)]
     pub fn create_policy(ctx: &Context, name: &str) -> Result<Policy> {
         let policy = Policy {
             id: "1".into(),
             name: name.into(),
             updated_on: Utc::now(),
         };
+        println!("pid {}",20);
         Ok(policy)
     }
 
-    #[observed("update_policy")]
+    #[observed(update_policy)]
     pub fn update_policy(ctx: &Context, pid: &str, name: &str) -> Result<Policy> {
         let mut p = Policy::get_by_id(pid)?;
+        observe_field("qid {}",23);
+        //observe();
             Ok(p)
     }
 

@@ -70,8 +70,7 @@ pub fn observed(metadata: TokenStream, input: TokenStream) -> TokenStream {
     let ident = f.ident;
     let inputs = f.decl.inputs;
     let output = f.decl.output;
-    //let block = rewrite(f.block);
-    let block = f.block;
+    let block = rewrite(f.block);
 
     let output = quote!{
         #vis fn #ident(#inputs) #output {
@@ -80,7 +79,8 @@ pub fn observed(metadata: TokenStream, input: TokenStream) -> TokenStream {
             })
         }
     };
-    log(&format!("{}", output.to_string()),"/tmp/log3.txt");
+    log(&format!("{}", output.to_string()),"/tmp/log30.txt");
+    std::thread::sleep_ms(5000);
     output.into()
 }
 
@@ -93,6 +93,57 @@ pub fn balanced_if(_metadata: TokenStream, input: TokenStream) -> TokenStream {
 
     let output = quote! { #item };
     output.into()
+}
+
+fn rewrite(block: Box<syn::Block>) -> Box<syn::Block> {
+    let mut stmts: Vec<syn::Stmt> = Vec::new();
+
+    for st in block.clone().stmts {
+        match st {
+            syn::Stmt::Semi(e,s) => {
+                match e {
+                    syn::Expr::Macro(m) => {
+                        let mut new_macro = m.clone();
+                        if m.mac.path.segments[0].ident.to_string().eq("println") {
+
+                            new_macro.mac.path.segments[0].ident = syn::Ident::new("format",Span::call_site());
+                        }
+                        stmts.push(syn::Stmt::Semi(syn::Expr::Macro(new_macro),s));
+                    },
+                    syn::Expr::Call(c) => {
+                        let mut call = c.clone();
+                        match *c.func {
+                            syn::Expr::Path(p) => {
+                                let mut path = p.clone();
+                                log(&format!("{:?}",p.path.segments[0].ident.to_string()),"/tmp/log4.txt");
+                                if p.path.segments[0].ident.to_string().eq("observe_field") {
+                                    path.path.segments[0].ident = syn::Ident::new("observe_i32",Span::call_site());
+                                }
+                                stmts.push(syn::Stmt::Semi(syn::Expr::Call(syn::ExprCall{
+                                    attrs: call.attrs,
+                                    func: Box::new(syn::Expr::Path(syn::ExprPath{
+                                        attrs: vec![],
+                                        qself: None,
+                                        path: path.path,
+                                    })),
+                                    paren_token: call.paren_token,
+                                    args: call.args,
+                                }),s));
+                            },
+                            _ => {},
+                        }
+                    },
+                    t => {
+                        stmts.push(syn::Stmt::Semi(t,s))
+                    }
+                }
+            },
+            t => {stmts.push(t)}
+        }
+    }
+    let mut new_block = block.clone();
+    new_block.stmts = stmts;
+    new_block
 }
 
 fn validate(metadata: String) {

@@ -3,10 +3,10 @@ extern crate serde_derive;
 #[macro_use]
 extern crate serde_json;
 
-mod context;
+pub mod context;
 mod event;
 mod frame;
-mod observe;
+pub mod observe;
 mod queue;
 
 pub use crate::context::Context;

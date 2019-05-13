@@ -36,7 +36,7 @@ impl Context {
             context_id,
             frame: RefCell::new(frame),
             key: uuid::Uuid::new_v4().to_string(),
-            queue: queue,
+            queue,
         }
     }
 
@@ -111,4 +111,12 @@ impl Context {
         // serde_json::to_value(self.clone()).unwrap().to_string()
         unimplemented!()
     }
+
+    pub fn observe_string(&self, name: &str, value: String){
+        unimplemented!()
+    }
+}
+
+pub fn observe_i32(name: &str, value: i32){
+    unimplemented!()
 }
