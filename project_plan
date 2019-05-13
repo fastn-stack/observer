@@ -1,0 +1,35 @@
+Plan:
+
+-- poc / first publish to crate
+
+1[x] rename crate: on top level in this repo (instead of examples folder), observer_attribute
+2[] Event struct, lazy_static stuff to load. verify lazy_static is really lazy_static, meaning
+   use the macro twice and ensure lazy_static init code is executed only once. get json file name
+   via env variable.
+   {
+    "event_id": {
+        "critical": bool, // optional
+        "fields": {
+            "name": "String"
+        }
+    }
+   }
+3[] Context.observe_i32(), Context.observe_string()
+4[] rewrite: observe!(name, value) -> observe_<field_type>(ctx, name, value)
+5[] fix frame stuff that we commented out
+6[] dummy_queue implementation (for testing, tutorial etc)
+
+-- production ready
+
+1. observer_kafka crate
+2. observer_kinesis crate
+3. file to queue local service
+4. handler trait
+5. handler triat impl for BigQuery
+
+-- later
+
+- check_pr to check json file from repo is diff from prod
+- FieldType enum is specific to BigQuery, but someone may want to use a different store, eg pgsql,
+  which has fields like geo, or date range etc. we will have a feature, which can be used to decide
+  exactly what all variants based of active feature.

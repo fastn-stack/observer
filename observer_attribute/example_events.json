@@ -1,0 +1,17 @@
+[
+  {
+    "name" : "policy",
+    "critical" : true,
+    "fields" : {
+      "pid" : "String"
+    }
+  },
+  {
+    "name" : "quote",
+    "critical" : false,
+    "fields" : {
+      "qid" : "String",
+      "premium" : "int"
+    }
+  }
+]

@@ -17,7 +17,7 @@ impl Policy {
         })
     }
 
-    #[observed("policy_name_changed:critical")]
+    #[observed("policy_name_changed")]
     pub fn create_policy(ctx: &Context, name: &str) -> Result<Policy> {
         let policy = Policy {
             id: "1".into(),
@@ -25,6 +25,12 @@ impl Policy {
             updated_on: Utc::now(),
         };
         Ok(policy)
+    }
+
+    #[observed("update_policy")]
+    pub fn update_policy(ctx: &Context, pid: &str, name: &str) -> Result<Policy> {
+        let mut p = Policy::get_by_id(pid)?;
+            Ok(p)
     }
 
     //    #[observed("policy_name_changed:critical")]

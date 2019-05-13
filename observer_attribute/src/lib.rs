@@ -4,131 +4,55 @@ extern crate proc_macro2;
 extern crate syn;
 #[macro_use]
 extern crate quote;
+#[macro_use]
+extern crate lazy_static;
+#[macro_use]
+extern crate serde_derive;
+#[macro_use]
+extern crate serde_json;
 
-
-/*
-
-Plan:
-
--- poc / first publish to crate
-
-0. rename crate: on top level in this repo (instead of examples folder), observer_attribute
-1. Event struct, lazy_static stuff to load. verify lazy_static is really lazy_static, meaning
-   use the macro twice and ensure lazy_static init code is executed only once. get json file name
-   via env variable.
-   {
-    "event_id": {
-        "critical": bool, // optional
-        "fields": {
-            "name": "String"
-        }
-    }
-   }
-3. Context.observe_i32(), Context.observe_string()
-4. rewrite: observe!(name, value) -> observe_<field_type>(ctx, name, value)
-5. fix frame stuff that we commented out
-6. dummy_queue implementation (for testing, tutorial etc)
-
--- production ready
-
-1. observer_kafka crate
-2. observer_kinesis crate
-3. file to queue local service
-4. handler trait
-5. handler triat impl for BigQuery
-
--- later
-
-- check_pr to check json file from repo is diff from prod
-- FieldType enum is specific to BigQuery, but someone may want to use a different store, eg pgsql,
-  which has fields like geo, or date range etc. we will have a feature, which can be used to decide
-  exactly what all variants based of active feature.
-
-*/
 use proc_macro::TokenStream;
 use syn::{Item, Expr::{Closure}, Expr, punctuated::Punctuated};
 use syn::token::Or;
 use proc_macro2::Span;
 use std::collections::HashMap;
-
-
-fn log_simple(msg: &str) {
-    use std::io::prelude::*;
-
-    let path = std::path::Path::new("/tmp/log.txt");
-    let mut file = std::fs::OpenOptions::new().write(true).open(&path).unwrap();
-    file.write_all(msg.as_bytes()).unwrap();
-    file.write_all("\n".as_bytes()).unwrap();
-}
-
-#[proc_macro_attribute]
-pub fn balanced_if(_metadata: TokenStream, input: TokenStream) -> TokenStream {
-    let item: Item = syn::parse(input).expect("failed to parse input");
-
-    log_simple(&format!("{:#?}", item));
-    check_item(&item);
-
-    let output = quote! { #item };
-    output.into()
-}
-
-fn check_item(item: &Item) {
-    match item {
-        Item::Fn(func) => {
-            for stmt in func.block.stmts.iter() {
-                match stmt {
-                    syn::Stmt::Local(local) => match &local.init {
-                        Some((_, init)) => check_expr(init),
-                        None => {}
-                    },
-                    syn::Stmt::Item(i) => check_item(i),
-                    syn::Stmt::Expr(e) => check_expr(e),
-                    syn::Stmt::Semi(e, _) => check_expr(e),
-                }
-            }
-        }
-        _ => {}
-    }
-}
-
-fn check_expr(expr: &syn::Expr) {
-    match expr {
-        syn::Expr::Array(a) => {
-            for e in a.elems.iter() {
-                check_expr(e)
-            }
-        }
-        _ => {}
-    }
-}
-
-
-fn log(msg: &str,path: &str) {
-    use std::io::prelude::*;
-
-    let path = std::path::Path::new(path);
-    let mut file = std::fs::OpenOptions::new().write(true).open(&path).unwrap();
-    file.write_all(msg.as_bytes()).unwrap();
-    file.write_all("\n".as_bytes()).unwrap();
-}
+use serde;
+use std::{env, fs::File};
 
 enum FieldType {
     Integer,
     String
 }
 
-
+#[derive(Debug,Deserialize,Clone)]
 struct Event {
     name: String,
     critical: bool,
-    fields: HashMap<String, FieldType>
+    fields: HashMap<String, String>
+}
+
+lazy_static!{
+    static ref count: i32 = 0;
+     static ref EVENTS: HashMap<String,Event> = {
+        let events_path = env::var("EVENTS_PATH").unwrap_or("".to_string());
+        log(&format!("random   "),"/tmp/log4.txt");
+        let events_file = File::open(events_path).expect("could not load default.json");
+        let events: Vec<Event> =
+                serde_json::from_reader(events_file).expect("invalid json");
+        let mut map: HashMap<String,Event> = HashMap::new();
+        for e in events{
+            map.insert(e.name.clone(),e);
+        }
+        map
+    };
 }
 
 //const events: HashMap<String, Event> = HashMap::new();
 
 #[proc_macro_attribute]
 pub fn observed(metadata: TokenStream, input: TokenStream) -> TokenStream {
-    log(&format!("{}", metadata.to_string()),"/tmp/log1.txt");
+    let a: HashMap<String,Event> = EVENTS.clone();
+    log(&format!("{:?}", a.get("policy")),"/tmp/log1.txt");
 
     validate(metadata.to_string());
 
@@ -157,6 +81,17 @@ pub fn observed(metadata: TokenStream, input: TokenStream) -> TokenStream {
         }
     };
     log(&format!("{}", output.to_string()),"/tmp/log3.txt");
+    output.into()
+}
+
+#[proc_macro_attribute]
+pub fn balanced_if(_metadata: TokenStream, input: TokenStream) -> TokenStream {
+    let item: Item = syn::parse(input).expect("failed to parse input");
+
+    log_simple(&format!("{:#?}", item));
+    check_item(&item);
+
+    let output = quote! { #item };
     output.into()
 }
 
@@ -245,5 +180,52 @@ fn wrap(item: Item) -> Item {
             syn::Item::Fn(func)
         },
         _ => panic!("this attribute macro can only apply on functions")
+    }
+}
+
+fn log_simple(msg: &str) {
+    use std::io::prelude::*;
+
+    let path = std::path::Path::new("/tmp/log.txt");
+    let mut file = std::fs::OpenOptions::new().write(true).open(&path).unwrap();
+    file.write_all(msg.as_bytes()).unwrap();
+    file.write_all("\n".as_bytes()).unwrap();
+}
+
+fn log(msg: &str,path: &str) {
+    use std::io::prelude::*;
+    let path = std::path::Path::new(path);
+    let mut file = std::fs::OpenOptions::new().write(true).open(&path).unwrap();
+    file.write_all(msg.as_bytes()).unwrap();
+    file.write_all("\n".as_bytes()).unwrap();
+}
+
+fn check_item(item: &Item) {
+    match item {
+        Item::Fn(func) => {
+            for stmt in func.block.stmts.iter() {
+                match stmt {
+                    syn::Stmt::Local(local) => match &local.init {
+                        Some((_, init)) => check_expr(init),
+                        None => {}
+                    },
+                    syn::Stmt::Item(i) => check_item(i),
+                    syn::Stmt::Expr(e) => check_expr(e),
+                    syn::Stmt::Semi(e, _) => check_expr(e),
+                }
+            }
+        }
+        _ => {}
+    }
+}
+
+fn check_expr(expr: &syn::Expr) {
+    match expr {
+        syn::Expr::Array(a) => {
+            for e in a.elems.iter() {
+                check_expr(e)
+            }
+        }
+        _ => {}
     }
 }
