@@ -112,15 +112,15 @@ impl Context {
         unimplemented!()
     }
 
-    pub fn observe_string(&self, name: &str, value: String){
-        unimplemented!()
-    }
 }
-
-pub fn observe_i32(name: &str, value: i32){
+pub fn observe_field(ctx: &Context, name: &str, value: &str){
     unimplemented!()
 }
 
-pub fn observe_string(name: &str, value: String){
+pub fn observe_string(ctx: &Context, name: &str, value: String){
+    unimplemented!()
+}
+
+pub fn observe_i32(ctx: &Context, name: &str, value: i32){
     unimplemented!()
 }

@@ -114,7 +114,7 @@ fn rewrite(block: Box<syn::Block>, table_name: String) -> Box<syn::Block> {
                             syn::Expr::Path(p) => {
                                 let mut path = p.clone();
                                 if p.path.segments[0].ident.to_string().eq("observe_field") {
-                                    if let syn::Expr::Lit(l) = args[0].clone() {
+                                    if let syn::Expr::Lit(l) = args[1].clone() {
                                         if let syn::Lit::Str(s) = l.lit.clone() {
                                             log(&format!("{:#?}",s.value()),"/tmp/log4.txt");
                                             let func = "observe_".to_string()+&get_func(s.value(),table_name.clone());

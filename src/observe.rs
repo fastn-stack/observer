@@ -44,11 +44,3 @@ where
     result
     */
 }
-
-pub fn observe_field(name: &str, value: &str){
-
-}
-
-pub fn observe_fie(name: &str, value: i32){
-
-}

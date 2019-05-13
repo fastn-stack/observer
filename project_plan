@@ -14,8 +14,19 @@ Plan:
         }
     }
    }
+   [actual json file used contains array of events]
+   [
+    {
+      "name" : "event_id",
+      "critical" : bool,
+      "fields" : {
+        "name" : "String"
+      }
+    },
+   ]
 3[] Context.observe_i32(), Context.observe_string()
 4[x] rewrite: observe!(name, value) -> observe_<field_type>(ctx, name, value)
+    [actual implementation of rewrite: observe_field(ctx, name, value) -> observe_<field_type>(ctx, name, value)]
 5[] fix frame stuff that we commented out
 6[] dummy_queue implementation (for testing, tutorial etc)
 
