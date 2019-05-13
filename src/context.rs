@@ -120,3 +120,7 @@ impl Context {
 pub fn observe_i32(name: &str, value: i32){
     unimplemented!()
 }
+
+pub fn observe_string(name: &str, value: String){
+    unimplemented!()
+}

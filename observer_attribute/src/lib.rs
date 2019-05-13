@@ -18,6 +18,7 @@ use proc_macro2::Span;
 use std::collections::HashMap;
 use serde;
 use std::{env, fs::File};
+use std::string::ToString;
 
 enum FieldType {
     Integer,
@@ -32,7 +33,6 @@ struct Event {
 }
 
 lazy_static!{
-    static ref count: i32 = 0;
      static ref EVENTS: HashMap<String,Event> = {
         let events_path = env::var("EVENTS_PATH").unwrap_or("".to_string());
         log(&format!("random   "),"/tmp/log4.txt");
@@ -51,9 +51,6 @@ lazy_static!{
 
 #[proc_macro_attribute]
 pub fn observed(metadata: TokenStream, input: TokenStream) -> TokenStream {
-    let a: HashMap<String,Event> = EVENTS.clone();
-    log(&format!("{:?}", a.get("policy")),"/tmp/log1.txt");
-
     validate(metadata.to_string());
 
     let table_name = get_table_name(metadata.to_string());
@@ -70,7 +67,7 @@ pub fn observed(metadata: TokenStream, input: TokenStream) -> TokenStream {
     let ident = f.ident;
     let inputs = f.decl.inputs;
     let output = f.decl.output;
-    let block = rewrite(f.block);
+    let block = rewrite(f.block, table_name.clone());
 
     let output = quote!{
         #vis fn #ident(#inputs) #output {
@@ -80,7 +77,6 @@ pub fn observed(metadata: TokenStream, input: TokenStream) -> TokenStream {
         }
     };
     log(&format!("{}", output.to_string()),"/tmp/log30.txt");
-    std::thread::sleep_ms(5000);
     output.into()
 }
 
@@ -95,7 +91,7 @@ pub fn balanced_if(_metadata: TokenStream, input: TokenStream) -> TokenStream {
     output.into()
 }
 
-fn rewrite(block: Box<syn::Block>) -> Box<syn::Block> {
+fn rewrite(block: Box<syn::Block>, table_name: String) -> Box<syn::Block> {
     let mut stmts: Vec<syn::Stmt> = Vec::new();
 
     for st in block.clone().stmts {
@@ -112,12 +108,19 @@ fn rewrite(block: Box<syn::Block>) -> Box<syn::Block> {
                     },
                     syn::Expr::Call(c) => {
                         let mut call = c.clone();
+                        let mut args = call.args.clone();
+
                         match *c.func {
                             syn::Expr::Path(p) => {
                                 let mut path = p.clone();
-                                log(&format!("{:?}",p.path.segments[0].ident.to_string()),"/tmp/log4.txt");
                                 if p.path.segments[0].ident.to_string().eq("observe_field") {
-                                    path.path.segments[0].ident = syn::Ident::new("observe_i32",Span::call_site());
+                                    if let syn::Expr::Lit(l) = args[0].clone() {
+                                        if let syn::Lit::Str(s) = l.lit.clone() {
+                                            log(&format!("{:#?}",s.value()),"/tmp/log4.txt");
+                                            let func = "observe_".to_string()+&get_func(s.value(),table_name.clone());
+                                            path.path.segments[0].ident = syn::Ident::new(&func,Span::call_site());
+                                        }
+                                    }
                                 }
                                 stmts.push(syn::Stmt::Semi(syn::Expr::Call(syn::ExprCall{
                                     attrs: call.attrs,
@@ -149,6 +152,34 @@ fn rewrite(block: Box<syn::Block>) -> Box<syn::Block> {
 fn validate(metadata: String) {
     if false {
         panic!();
+    }
+}
+
+fn get_event(table: String) -> Event {
+    match EVENTS.clone().get(&table) {
+        Some(e) => {
+            e.clone()
+        },
+        None => panic!("No table named \"{}\" in the events.json file",table),
+    }
+}
+
+fn get_func(field: String, table: String) -> String {
+    match get_event(table.clone()).fields.get(&field) {
+        Some(t) => {
+            get_rust_type(t.to_string())
+        },
+        None => panic!("No field named \"{}\" in the fields for the table \"{}\"",field,table),
+    }
+}
+
+fn get_rust_type(storage_type: String) -> String {
+    if storage_type.to_lowercase().eq("int") {
+        return "i32".to_string();
+    }else if storage_type.to_lowercase().eq("string") {
+        return "string".to_string();
+    }else {
+        return "string".to_string();
     }
 }
 

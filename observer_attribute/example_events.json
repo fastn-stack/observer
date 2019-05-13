@@ -10,8 +10,8 @@
     "name" : "quote",
     "critical" : false,
     "fields" : {
-      "qid" : "String",
-      "premium" : "int"
+      "qid" : "int",
+      "premium" : "String"
     }
   }
 ]

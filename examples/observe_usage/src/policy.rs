@@ -18,7 +18,7 @@ impl Policy {
         })
     }
 
-    #[observed(policy_name_changed)]
+    #[observed(policy)]
     pub fn create_policy(ctx: &Context, name: &str) -> Result<Policy> {
         let policy = Policy {
             id: "1".into(),
@@ -29,10 +29,10 @@ impl Policy {
         Ok(policy)
     }
 
-    #[observed(update_policy)]
+    #[observed(quote)]
     pub fn update_policy(ctx: &Context, pid: &str, name: &str) -> Result<Policy> {
         let mut p = Policy::get_by_id(pid)?;
-        observe_field("qid {}",23);
+        observe_field("qid_",4839);
         //observe();
             Ok(p)
     }
