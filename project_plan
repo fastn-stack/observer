@@ -3,7 +3,7 @@ Plan:
 -- poc / first publish to crate
 
 1[x] rename crate: on top level in this repo (instead of examples folder), observer_attribute
-2[] Event struct, lazy_static stuff to load. verify lazy_static is really lazy_static, meaning
+2[x] Event struct, lazy_static stuff to load. verify lazy_static is really lazy_static, meaning
    use the macro twice and ensure lazy_static init code is executed only once. get json file name
    via env variable.
    {
