@@ -1,8 +1,8 @@
 use chrono::prelude::*;
-use observer::{observe::observe, context::{observe_i32,observe_string}, Result, Context};
+use observer::{observe::observe, context::{observe_i32,observe_string}, Result, Context, resulty::Resulty};
 use std::string::ToString;
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, Resulty)]
 pub struct Policy {
     pub id: String,
     pub name: String,
@@ -33,45 +33,8 @@ impl Policy {
     pub fn update_policy(ctx: &Context, pid: &str, _name: &str) -> Result<Policy> {
         let p = Policy::get_by_id(pid)?;
         observe_field(ctx,"qid",4839);
-        //observe();
             Ok(p)
     }
-
-    //    #[observed("policy_name_changed:critical")]
-    //    pub fn change_name(ctx: &Context, pid: &str, name: &str) -> Result<Policy> {
-    //        let mut p = Policy::get_by_id(pid)?;
-    //
-    //        observe!("pid", pid);
-    //        observe!("old_name", &p.name);
-    //
-    //        p.name = name.into();
-    //        p.create().observe(|p| p.id)
-    //    }
-
-    //    pub fn change_name(ctx: &Context, pid: &str, name: &str) -> Result<Policy> {
-    //        observe(ctx, "policy_name_changed::critical", || {
-    //            let mut p = Policy::get_by_id(pid)?;
-    //
-    //            ctx.observe_i32("pid", pid);
-    //            ctx.observe_str("old_name", &p.name);
-    //
-    //            p.name = name.into();
-    //            p.create().observe(|p| p.id)
-    //        }
-    //    }
-
-    //    pub fn change_name(ctx: &Context, pid: &str, name: &str) -> Result<Policy> {
-    //        || {
-    //            let mut p = Policy::get_by_id(pid)?;
-    //
-    //            ctx.observe_i32("pid", pid);
-    //            ctx.observe_str("old_name", &p.name);
-    //
-    //            p.name = name.into();
-    //
-    //            Ok(p)
-    //        }
-    //    }
 
     /*
     {

@@ -16,6 +16,7 @@ use std::collections::HashMap;
 use serde;
 use std::{env, fs::File};
 use std::string::ToString;
+use std::str::FromStr;
 
 enum FieldType {
     Integer,
@@ -44,21 +45,13 @@ lazy_static!{
     };
 }
 
-//const events: HashMap<String, Event> = HashMap::new();
-
 #[proc_macro_attribute]
 pub fn observed(metadata: TokenStream, input: TokenStream) -> TokenStream {
     validate(metadata.to_string());
 
-    let table_name = get_table_name(metadata.to_string());
+    let table_name = get_table_name(metadata.to_string()).replace("\"","");
 
     let item: syn::Item = syn::parse(input).expect("failed to parse input");
-    /*
-    let item = wrap(item);
-
-    let output = quote!{ #item };
-    log(&format!("{:#?}", output),"/tmp/log2.txt");
-    */
     let f = get_fn(item);
     let vis = f.vis;
     let ident = f.ident;
@@ -75,7 +68,8 @@ pub fn observed(metadata: TokenStream, input: TokenStream) -> TokenStream {
             })
         }
     };
-    log(&format!("{}", output.to_string()),"/tmp/log30.txt");
+
+    log(&format!("{}", output.to_string()),"/tmp/log34.txt");
     output.into()
 }
 
@@ -88,6 +82,23 @@ pub fn balanced_if(_metadata: TokenStream, input: TokenStream) -> TokenStream {
 
     let output = quote! { #item };
     output.into()
+}
+
+#[proc_macro_derive(Resulty)]
+pub fn derive_resulty(input: TokenStream) -> TokenStream {
+    let item: syn::Item = syn::parse(input.clone()).expect("failed to parse input");
+    let struc = get_struct_name(item).replace("\"","");
+    let st = &format!("impl Resulty for {} {}",struc,"{}");
+    proc_macro2::TokenStream::from_str(st).unwrap().into()
+}
+
+fn get_struct_name(item: syn::Item) -> String {
+    match item {
+        Item::Struct(struc) =>{
+            struc.ident.to_string()
+        },
+        _ => panic!("this attribute macro can only apply on structs")
+    }
 }
 
 fn rewrite(block: Box<syn::Block>, table_name: String) -> Box<syn::Block> {
