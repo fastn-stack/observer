@@ -35,7 +35,6 @@ struct Event {
 lazy_static!{
      static ref EVENTS: HashMap<String,Event> = {
         let events_path = env::var("EVENTS_PATH").unwrap_or("".to_string());
-        log(&format!("random   "),"/tmp/log4.txt");
         let events_file = File::open(events_path).expect("could not load default.json");
         let events: Vec<Event> =
                 serde_json::from_reader(events_file).expect("invalid json");
@@ -69,9 +68,11 @@ pub fn observed(metadata: TokenStream, input: TokenStream) -> TokenStream {
     let output = f.decl.output;
     let block = rewrite(f.block, table_name.clone());
 
+    let is_critical = get_event(table_name.clone()).critical;
+
     let output = quote!{
         #vis fn #ident(#inputs) #output {
-            observe(ctx, #table_name, || {
+            observe(ctx, #table_name, #is_critical, || {
                 #block
             })
         }

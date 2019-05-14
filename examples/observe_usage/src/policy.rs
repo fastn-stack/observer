@@ -1,6 +1,7 @@
 use chrono::prelude::*;
 #[macro_use]
 use observer::{observe::observe, context::{observe_field,observe_i32,observe_string}, Result, Context};
+use std::string::ToString;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Policy {
@@ -25,7 +26,7 @@ impl Policy {
             name: name.into(),
             updated_on: Utc::now(),
         };
-        println!("pid {}",20);
+        observe_field(ctx,"pid","activa_policy_id".to_string());
         Ok(policy)
     }
 

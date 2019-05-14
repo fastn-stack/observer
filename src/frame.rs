@@ -1,13 +1,23 @@
 use chrono::prelude::*;
+use core::borrow::BorrowMut;
+use crate::context::LOCAL_FILE_SYSTEM_DIRECTORY;
+use std::{
+    fs::{create_dir, File},
+    io::Write,
+    path::Path
+};
+use std::collections::HashMap;
 
-#[derive(Serialize, Debug)]
+#[derive(Serialize, Debug, Clone, Deserialize)]
 pub struct Frame {
     key: String,
     frame_id: String,
-    breadcrumbs: Option<serde_json::Value>,
+    breadcrumbs: Option<HashMap<String,serde_json::Value>>,
     start_ts: DateTime<Utc>,
-    end_ts: Option<DateTime<Utc>>,
-    sub_frames: Vec<Frame>,
+    pub success: Option<bool>,
+    pub result: Option<String>,
+    pub end_ts: Option<DateTime<Utc>>,
+    pub sub_frames: Vec<Frame>,
 }
 
 impl Frame {
@@ -16,6 +26,8 @@ impl Frame {
             key: uuid::Uuid::new_v4().to_string(),
             frame_id,
             breadcrumbs: None,
+            result: None,
+            success: None,
             start_ts: chrono::Utc::now(),
             end_ts: None,
             sub_frames: vec![],
@@ -27,13 +39,49 @@ impl Frame {
             "f_key" : self.key,
             "frame_id" : self.frame_id,
             "breadcrumbs" : self.breadcrumbs,
+            "result" : self.result,
+            "success" : self.success,
             "start_ts" : self.start_ts,
             "end_ts" : self.end_ts
         })
     }
 
     pub fn get_key(&self) -> String {
-        // self.clone().key
+        self.clone().key
+    }
+
+    pub fn save(&self, critical: bool){
+        if critical {
+            self.enqueue()
+        }else {
+            self.save_on_local()
+        }
+    }
+
+    pub fn save_on_local(&self) {
+        let mut result;
+        let destination_folder = LOCAL_FILE_SYSTEM_DIRECTORY.to_string() + self.frame_id.as_str();
+
+        if !Path::new(destination_folder.as_str()).exists() {
+            create_dir(destination_folder.clone()).unwrap(); // TODO
+        }
+        let mut file = File::create(destination_folder + "/" + self.get_key().as_str()).unwrap();
+        let data = self.get_data();
+        result = file.write(data.to_string().as_bytes());
+
+        if let Err(e) = result {
+            println!("Error while saving on the local file system: {:?}", e);
+        }
+    }
+
+    pub fn enqueue(&self) {
         unimplemented!()
+    }
+
+    //adds the name and value to breadcrums
+    pub fn add_value(&mut self, name: &str, value: serde_json::Value) {
+        let mut current_breadcrumbs = self.clone().breadcrumbs.unwrap_or(HashMap::new());
+        current_breadcrumbs.insert(name.to_string(),value);
+        self.breadcrumbs = Some(current_breadcrumbs);
     }
 }
