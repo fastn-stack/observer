@@ -1,6 +1,5 @@
 extern crate proc_macro;
 extern crate proc_macro2;
-#[macro_use]
 extern crate syn;
 #[macro_use]
 extern crate quote;
@@ -8,12 +7,10 @@ extern crate quote;
 extern crate lazy_static;
 #[macro_use]
 extern crate serde_derive;
-#[macro_use]
 extern crate serde_json;
 
 use proc_macro::TokenStream;
-use syn::{Item, Expr::{Closure}, Expr, punctuated::Punctuated};
-use syn::token::Or;
+use syn::Item;
 use proc_macro2::Span;
 use std::collections::HashMap;
 use serde;
@@ -35,6 +32,7 @@ struct Event {
 lazy_static!{
      static ref EVENTS: HashMap<String,Event> = {
         let events_path = env::var("EVENTS_PATH").unwrap_or("".to_string());
+
         let events_file = File::open(events_path).expect("could not load default.json");
         let events: Vec<Event> =
                 serde_json::from_reader(events_file).expect("invalid json");
@@ -108,8 +106,8 @@ fn rewrite(block: Box<syn::Block>, table_name: String) -> Box<syn::Block> {
                         stmts.push(syn::Stmt::Semi(syn::Expr::Macro(new_macro),s));
                     },
                     syn::Expr::Call(c) => {
-                        let mut call = c.clone();
-                        let mut args = call.args.clone();
+                        let call = c.clone();
+                        let args = call.args.clone();
 
                         match *c.func {
                             syn::Expr::Path(p) => {
@@ -150,7 +148,7 @@ fn rewrite(block: Box<syn::Block>, table_name: String) -> Box<syn::Block> {
     new_block
 }
 
-fn validate(metadata: String) {
+fn validate(_metadata: String) {
     if false {
         panic!();
     }
@@ -188,79 +186,10 @@ fn get_table_name(metadata: String) -> String{
     metadata
 }
 
-fn func_to_clousre(func: &syn::ItemFn) -> syn::Expr {
-    let body = func.block.clone();
-    parse_quote!(|ctx| { #body })
-    /*
-    Expr::Closure(syn::ExprClosure{attrs: vec![],
-        asyncness: None,
-        movability: None,
-        capture: None,
-        or1_token: Or{
-            spans: [Span::call_site()]
-        },
-        inputs: Punctuated::new(),
-        or2_token: Or{
-            spans: [Span::call_site()]
-        },
-        output: syn::ReturnType::Default,
-        body: Box::new(Expr::Block(syn::ExprBlock{attrs: vec![],
-            label: None,
-            block: syn::Block{
-                brace_token: syn::token::Brace{
-                    span: Span::call_site(),
-                },
-                stmts: func.block.stmts.clone()
-            }
-        })),
-    })
-    */
-}
-
-fn let_expr(name: &str, value: syn::Expr) -> syn::Stmt {
-    let name = quote!(name);
-    parse_quote!(let #name = #value;)
-    /*
-    syn::Stmt::Expr(syn::Expr::Let(syn::ExprLet{
-        attrs: vec![],
-        let_token: syn::token::Let{span: Span::call_site()},
-        eq_token: syn::token::Eq{
-            spans: [Span::call_site()]
-        },
-        expr: Box::new(value),
-        pats: Punctuated::new()
-    }))
-    */
-}
-
-fn call_func(name: &str) -> syn::Stmt {
-    let name = quote!(name);
-    parse_quote!(return #name(ctx);)
-    /*
-    syn::Stmt::Expr(syn::Expr::Call(syn::ExprCall{
-        attrs: vec![],
-        func: Box::new(name),
-        paren_token: syn::token::Paren{span: Span::call_site()},
-        args: Punctuated::new()
-    }))
-    */
-}
-
 fn get_fn(item: Item) -> syn::ItemFn {
     match item {
         Item::Fn(func) =>{
             func
-        },
-        _ => panic!("this attribute macro can only apply on functions")
-    }
-}
-
-fn wrap(item: Item) -> Item {
-    match item {
-        Item::Fn(mut func) =>{
-            let c = func_to_clousre(&func);
-            func.block.stmts = vec![let_expr("c", c), call_func("c")];
-            syn::Item::Fn(func)
         },
         _ => panic!("this attribute macro can only apply on functions")
     }

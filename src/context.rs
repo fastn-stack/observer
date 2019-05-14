@@ -41,14 +41,13 @@ impl Context {
     }
 
     pub fn finalise(&self) {
-        unimplemented!()
-//        self.update_end_ts(Utc::now());
-//        let destination_folder = LOCAL_FILE_SYSTEM_DIRECTORY.to_string() + "context/";
-//        if !Path::new(destination_folder.as_str()).exists() {
-//            create_dir(destination_folder.clone()).unwrap(); // TODO
-//        }
-//        let mut file = File::create(destination_folder + "/" + self.key.as_str()).unwrap();
-//        file.write(self.get_data().as_bytes()).unwrap(); // TODO
+        self.update_end_ts(Utc::now());
+        let destination_folder = LOCAL_FILE_SYSTEM_DIRECTORY.to_string() + "context/";
+        if !Path::new(destination_folder.as_str()).exists() {
+            create_dir(destination_folder.clone()).unwrap(); // TODO
+        }
+        let mut file = File::create(destination_folder + "/" + self.key.as_str()).unwrap();
+        file.write(self.get_data().as_bytes()).unwrap(); // TODO
     }
 
     pub fn start_frame(&self, frame_id: String) -> Frame {

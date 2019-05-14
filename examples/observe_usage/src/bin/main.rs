@@ -8,5 +8,6 @@ fn main() {
     let ctx = Context::new("test_context".to_string(), QueueEnum::DummyQueue);
     let result = Policy::create_policy(&ctx, "activa_policy");
     print!("result: {:?}",result);
+    &ctx.finalise();
 }
 

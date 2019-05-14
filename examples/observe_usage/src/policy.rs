@@ -1,6 +1,5 @@
 use chrono::prelude::*;
-#[macro_use]
-use observer::{observe::observe, context::{observe_field,observe_i32,observe_string}, Result, Context};
+use observer::{observe::observe, context::{observe_i32,observe_string}, Result, Context};
 use std::string::ToString;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -31,8 +30,8 @@ impl Policy {
     }
 
     #[observed(quote)]
-    pub fn update_policy(ctx: &Context, pid: &str, name: &str) -> Result<Policy> {
-        let mut p = Policy::get_by_id(pid)?;
+    pub fn update_policy(ctx: &Context, pid: &str, _name: &str) -> Result<Policy> {
+        let p = Policy::get_by_id(pid)?;
         observe_field(ctx,"qid",4839);
         //observe();
             Ok(p)
