@@ -7,6 +7,10 @@ use std::{
     path::Path
 };
 use std::collections::HashMap;
+use crate::queue::QueueEnum;
+use crate::observer_dqueue::dummy_queue::DummyQueue as DQueue;
+use crate::queue::QueueEnum::DummyQueue;
+use crate::queue::Queue;
 
 #[derive(Serialize, Debug, Clone, Deserialize)]
 pub struct Frame {
@@ -50,9 +54,9 @@ impl Frame {
         self.clone().key
     }
 
-    pub fn save(&self, critical: bool){
+    pub fn save(&self, critical: bool, queue: QueueEnum){
         if critical {
-            self.enqueue()
+            self.enqueue(queue)
         }else {
             self.save_on_local()
         }
@@ -74,8 +78,16 @@ impl Frame {
         }
     }
 
-    pub fn enqueue(&self) {
-        unimplemented!()
+    pub fn enqueue(&self, queue: QueueEnum) {
+        match queue {
+            QueueEnum::DummyQueue => {
+                let dq =&mut DQueue::new();
+                dq.enqueue(self);
+            },
+            QueueEnum::KafkaQueue => {
+                unimplemented!()
+            }
+        }
     }
 
     //adds the name and value to breadcrums
