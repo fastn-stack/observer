@@ -9,7 +9,6 @@ mod frame;
 pub mod resulty;
 pub mod observe;
 pub mod queue;
-pub mod observer_dqueue;
 
 pub use crate::context::Context;
 pub use crate::event::{Event, OEvent, OID};

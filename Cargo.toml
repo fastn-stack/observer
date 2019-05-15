@@ -14,3 +14,11 @@ uuid = { version = "0.7", features = ["serde", "v4"] }
 [dependencies.chrono]
 version = "0.4"
 features = ["serde"]
+
+[dependencies.observer_dqueue]
+path = "./observer_dqueue"
+version = "0.1.0"
+
+[dependencies.observer_queue]
+path = "./observer_queue"
+version = "0.1.0"

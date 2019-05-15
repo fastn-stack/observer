@@ -8,9 +8,9 @@ use std::{
 };
 use std::collections::HashMap;
 use crate::queue::QueueEnum;
-use crate::observer_dqueue::dummy_queue::DummyQueue as DQueue;
+use observer_dqueue::dummy_queue::DummyQueue as DQueue;
 use crate::queue::QueueEnum::DummyQueue;
-use crate::queue::Queue;
+use observer_queue::queue::Queue;
 
 #[derive(Serialize, Debug, Clone, Deserialize)]
 pub struct Frame {
@@ -82,7 +82,7 @@ impl Frame {
         match queue {
             QueueEnum::DummyQueue => {
                 let dq =&mut DQueue::new();
-                dq.enqueue(self);
+                dq.enqueue(self.get_data());
             },
             QueueEnum::KafkaQueue => {
                 unimplemented!()

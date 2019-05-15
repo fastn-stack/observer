@@ -1,14 +1,12 @@
-use crate::queue::Queue;
-use crate::frame::Frame;
-
+use observer_queue::queue::Queue;
 
 pub struct DummyQueue {
     data_queue: Vec<serde_json::Value>
 }
 
 impl Queue for DummyQueue {
-    fn enqueue(&mut self, frame: &Frame) {
-        self.data_queue.push(frame.get_data())
+    fn enqueue(&mut self, data: serde_json::Value) {
+        self.data_queue.push(data);
     }
 }
 
