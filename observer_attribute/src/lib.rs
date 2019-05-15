@@ -68,8 +68,6 @@ pub fn observed(metadata: TokenStream, input: TokenStream) -> TokenStream {
             })
         }
     };
-
-    log(&format!("{}", output.to_string()),"/tmp/log34.txt");
     output.into()
 }
 
@@ -126,7 +124,6 @@ fn rewrite(block: Box<syn::Block>, table_name: String) -> Box<syn::Block> {
                                 if p.path.segments[0].ident.to_string().eq("observe_field") {
                                     if let syn::Expr::Lit(l) = args[1].clone() {
                                         if let syn::Lit::Str(s) = l.lit.clone() {
-                                            log(&format!("{:#?}",s.value()),"/tmp/log4.txt");
                                             let func = "observe_".to_string()+&get_func(s.value(),table_name.clone());
                                             path.path.segments[0].ident = syn::Ident::new(&func,Span::call_site());
                                         }

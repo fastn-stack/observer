@@ -1,5 +1,5 @@
 use crate::frame::Frame;
-use crate::queue::{Queue, QueueEnum};
+use crate::queue::{QueueEnum};
 use chrono::{DateTime, Utc};
 use serde_derive::{Deserialize, Serialize};
 use std::{
