@@ -1,12 +1,12 @@
-[
-  {
+{
+  "policy" : {
     "name" : "policy",
     "critical" : true,
     "fields" : {
       "pid" : "String"
     }
   },
-  {
+  "quote" : {
     "name" : "quote",
     "critical" : false,
     "fields" : {
@@ -14,4 +14,4 @@
       "premium" : "String"
     }
   }
-]
+}

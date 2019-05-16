@@ -1,5 +1,10 @@
 use chrono::prelude::*;
-use observer::{observe::observe, context::{observe_i32,observe_string}, Result, Context, resulty::Resulty};
+use observer::{
+    context::{observe_i32, observe_string},
+    observe::observe,
+    resulty::Resulty,
+    Context, Result,
+};
 use std::string::ToString;
 
 #[derive(Debug, Serialize, Deserialize, Clone, Resulty)]
@@ -25,15 +30,15 @@ impl Policy {
             name: name.into(),
             updated_on: Utc::now(),
         };
-        observe_field(ctx,"pid","activa_policy_id".to_string());
+        observe_field(ctx, "pid", "activa_policy_id".to_string());
         Ok(policy)
     }
 
     #[observed(quote)]
     pub fn update_policy(ctx: &Context, pid: &str, _name: &str) -> Result<Policy> {
         let p = Policy::get_by_id(pid)?;
-        observe_field(ctx,"qid",4839);
-            Ok(p)
+        observe_field(ctx, "qid", 4839);
+        Ok(p)
     }
 
     /*

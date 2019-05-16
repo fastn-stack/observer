@@ -1,7 +1,7 @@
-use crate::{context::Context, event::Event, frame::Frame, Result, resulty::Resulty};
+use crate::{context::Context, event::Event, frame::Frame, resulty::Resulty, Result};
 use chrono::Utc;
 
-pub fn observe<F,T>(ctx: &Context, table_name: &str, critical: bool, closure: F) -> Result<T>
+pub fn observe<F, T>(ctx: &Context, table_name: &str, critical: bool, closure: F) -> Result<T>
 where
     F: FnOnce() -> std::result::Result<T, failure::Error>,
     T: std::fmt::Debug + serde::Serialize + Resulty,
@@ -13,13 +13,13 @@ where
         Ok(res) => {
             result = res.to_string();
             success = true;
-            ctx.end_frame(frame,critical,result,success);
+            ctx.end_frame(frame, critical, result, success);
             Ok(res)
-        },
+        }
         Err(E) => {
-            result = format!("{:?}",E);
+            result = format!("{:?}", E);
             success = false;
-            ctx.end_frame(frame,critical,result,success);
+            ctx.end_frame(frame, critical, result, success);
             Err(E)
         }
     }

@@ -6,9 +6,9 @@ extern crate serde_json;
 pub mod context;
 mod event;
 mod frame;
-pub mod resulty;
 pub mod observe;
 pub mod queue;
+pub mod resulty;
 
 pub use crate::context::Context;
 pub use crate::event::{Event, OEvent, OID};

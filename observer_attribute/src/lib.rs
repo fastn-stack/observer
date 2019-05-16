@@ -10,38 +10,33 @@ extern crate serde_derive;
 extern crate serde_json;
 
 use proc_macro::TokenStream;
-use syn::Item;
 use proc_macro2::Span;
-use std::collections::HashMap;
 use serde;
-use std::{env, fs::File};
-use std::string::ToString;
+use std::collections::HashMap;
 use std::str::FromStr;
+use std::string::ToString;
+use std::{env, fs::File};
+use syn::Item;
 
 enum FieldType {
     Integer,
-    String
+    String,
 }
 
-#[derive(Debug,Deserialize,Clone)]
+#[derive(Debug, Deserialize, Clone)]
 struct Event {
     name: String,
     critical: bool,
-    fields: HashMap<String, String>
+    fields: HashMap<String, String>,
 }
 
-lazy_static!{
-     static ref EVENTS: HashMap<String,Event> = {
+lazy_static! {
+    static ref EVENTS: HashMap<String, Event> = {
         let events_path = env::var("EVENTS_PATH").unwrap_or("".to_string());
 
         let events_file = File::open(events_path).expect("could not load default.json");
-        let events: Vec<Event> =
-                serde_json::from_reader(events_file).expect("invalid json");
-        let mut map: HashMap<String,Event> = HashMap::new();
-        for e in events{
-            map.insert(e.name.clone(),e);
-        }
-        map
+        let events: HashMap<String, Event> = serde_json::from_reader(events_file).expect("invalid json");
+        events
     };
 }
 
@@ -49,7 +44,7 @@ lazy_static!{
 pub fn observed(metadata: TokenStream, input: TokenStream) -> TokenStream {
     validate(metadata.to_string());
 
-    let table_name = get_table_name(metadata.to_string()).replace("\"","");
+    let table_name = get_table_name(metadata.to_string()).replace("\"", "");
 
     let item: syn::Item = syn::parse(input).expect("failed to parse input");
     let f = get_fn(item);
@@ -61,7 +56,7 @@ pub fn observed(metadata: TokenStream, input: TokenStream) -> TokenStream {
 
     let is_critical = get_event(table_name.clone()).critical;
 
-    let output = quote!{
+    let output = quote! {
         #vis fn #ident(#inputs) #output {
             observe(ctx, #table_name, #is_critical, || {
                 #block
@@ -85,17 +80,15 @@ pub fn balanced_if(_metadata: TokenStream, input: TokenStream) -> TokenStream {
 #[proc_macro_derive(Resulty)]
 pub fn derive_resulty(input: TokenStream) -> TokenStream {
     let item: syn::Item = syn::parse(input.clone()).expect("failed to parse input");
-    let struc = get_struct_name(item).replace("\"","");
-    let st = &format!("impl Resulty for {} {}",struc,"{}");
+    let struc = get_struct_name(item).replace("\"", "");
+    let st = &format!("impl Resulty for {} {}", struc, "{}");
     proc_macro2::TokenStream::from_str(st).unwrap().into()
 }
 
 fn get_struct_name(item: syn::Item) -> String {
     match item {
-        Item::Struct(struc) =>{
-            struc.ident.to_string()
-        },
-        _ => panic!("this attribute macro can only apply on structs")
+        Item::Struct(struc) => struc.ident.to_string(),
+        _ => panic!("this attribute macro can only apply on structs"),
     }
 }
 
@@ -104,51 +97,52 @@ fn rewrite(block: Box<syn::Block>, table_name: String) -> Box<syn::Block> {
 
     for st in block.clone().stmts {
         match st {
-            syn::Stmt::Semi(e,s) => {
-                match e {
-                    syn::Expr::Macro(m) => {
-                        let mut new_macro = m.clone();
-                        if m.mac.path.segments[0].ident.to_string().eq("println") {
+            syn::Stmt::Semi(e, s) => match e {
+                syn::Expr::Macro(m) => {
+                    let mut new_macro = m.clone();
+                    if m.mac.path.segments[0].ident.to_string().eq("println") {
+                        new_macro.mac.path.segments[0].ident =
+                            syn::Ident::new("format", Span::call_site());
+                    }
+                    stmts.push(syn::Stmt::Semi(syn::Expr::Macro(new_macro), s));
+                }
+                syn::Expr::Call(c) => {
+                    let call = c.clone();
+                    let args = call.args.clone();
 
-                            new_macro.mac.path.segments[0].ident = syn::Ident::new("format",Span::call_site());
-                        }
-                        stmts.push(syn::Stmt::Semi(syn::Expr::Macro(new_macro),s));
-                    },
-                    syn::Expr::Call(c) => {
-                        let call = c.clone();
-                        let args = call.args.clone();
-
-                        match *c.func {
-                            syn::Expr::Path(p) => {
-                                let mut path = p.clone();
-                                if p.path.segments[0].ident.to_string().eq("observe_field") {
-                                    if let syn::Expr::Lit(l) = args[1].clone() {
-                                        if let syn::Lit::Str(s) = l.lit.clone() {
-                                            let func = "observe_".to_string()+&get_func(s.value(),table_name.clone());
-                                            path.path.segments[0].ident = syn::Ident::new(&func,Span::call_site());
-                                        }
+                    match *c.func {
+                        syn::Expr::Path(p) => {
+                            let mut path = p.clone();
+                            if p.path.segments[0].ident.to_string().eq("observe_field") {
+                                if let syn::Expr::Lit(l) = args[1].clone() {
+                                    if let syn::Lit::Str(s) = l.lit.clone() {
+                                        let func = "observe_".to_string()
+                                            + &get_func(s.value(), table_name.clone());
+                                        path.path.segments[0].ident =
+                                            syn::Ident::new(&func, Span::call_site());
                                     }
                                 }
-                                stmts.push(syn::Stmt::Semi(syn::Expr::Call(syn::ExprCall{
+                            }
+                            stmts.push(syn::Stmt::Semi(
+                                syn::Expr::Call(syn::ExprCall {
                                     attrs: call.attrs,
-                                    func: Box::new(syn::Expr::Path(syn::ExprPath{
+                                    func: Box::new(syn::Expr::Path(syn::ExprPath {
                                         attrs: vec![],
                                         qself: None,
                                         path: path.path,
                                     })),
                                     paren_token: call.paren_token,
                                     args: call.args,
-                                }),s));
-                            },
-                            _ => {},
+                                }),
+                                s,
+                            ));
                         }
-                    },
-                    t => {
-                        stmts.push(syn::Stmt::Semi(t,s))
+                        _ => {}
                     }
                 }
+                t => stmts.push(syn::Stmt::Semi(t, s)),
             },
-            t => {stmts.push(t)}
+            t => stmts.push(t),
         }
     }
     let mut new_block = block.clone();
@@ -164,42 +158,39 @@ fn validate(_metadata: String) {
 
 fn get_event(table: String) -> Event {
     match EVENTS.clone().get(&table) {
-        Some(e) => {
-            e.clone()
-        },
-        None => panic!("No table named \"{}\" in the events.json file",table),
+        Some(e) => e.clone(),
+        None => panic!("No table named \"{}\" in the events.json file", table),
     }
 }
 
 fn get_func(field: String, table: String) -> String {
     match get_event(table.clone()).fields.get(&field) {
-        Some(t) => {
-            get_rust_type(t.to_string())
-        },
-        None => panic!("No field named \"{}\" in the fields for the table \"{}\"",field,table),
+        Some(t) => get_rust_type(t.to_string()),
+        None => panic!(
+            "No field named \"{}\" in the fields for the table \"{}\"",
+            field, table
+        ),
     }
 }
 
 fn get_rust_type(storage_type: String) -> String {
     if storage_type.to_lowercase().eq("int") {
         return "i32".to_string();
-    }else if storage_type.to_lowercase().eq("string") {
+    } else if storage_type.to_lowercase().eq("string") {
         return "string".to_string();
-    }else {
+    } else {
         return "string".to_string();
     }
 }
 
-fn get_table_name(metadata: String) -> String{
+fn get_table_name(metadata: String) -> String {
     metadata
 }
 
 fn get_fn(item: Item) -> syn::ItemFn {
     match item {
-        Item::Fn(func) =>{
-            func
-        },
-        _ => panic!("this attribute macro can only apply on functions")
+        Item::Fn(func) => func,
+        _ => panic!("this attribute macro can only apply on functions"),
     }
 }
 
@@ -212,7 +203,7 @@ fn log_simple(msg: &str) {
     file.write_all("\n".as_bytes()).unwrap();
 }
 
-fn log(msg: &str,path: &str) {
+fn log(msg: &str, path: &str) {
     use std::io::prelude::*;
     let path = std::path::Path::new(path);
     let mut file = std::fs::OpenOptions::new().write(true).open(&path).unwrap();

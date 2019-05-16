@@ -1,22 +1,22 @@
+use crate::context::LOCAL_FILE_SYSTEM_DIRECTORY;
+use crate::queue::QueueEnum;
+use crate::queue::QueueEnum::DummyQueue;
 use chrono::prelude::*;
 use core::borrow::BorrowMut;
-use crate::context::LOCAL_FILE_SYSTEM_DIRECTORY;
+use observer_dqueue::dummy_queue::DummyQueue as DQueue;
+use observer_queue::queue::Queue;
+use std::collections::HashMap;
 use std::{
     fs::{create_dir, File},
     io::Write,
-    path::Path
+    path::Path,
 };
-use std::collections::HashMap;
-use crate::queue::QueueEnum;
-use observer_dqueue::dummy_queue::DummyQueue as DQueue;
-use crate::queue::QueueEnum::DummyQueue;
-use observer_queue::queue::Queue;
 
 #[derive(Serialize, Debug, Clone, Deserialize)]
 pub struct Frame {
     key: String,
     frame_id: String,
-    breadcrumbs: Option<HashMap<String,serde_json::Value>>,
+    breadcrumbs: Option<HashMap<String, serde_json::Value>>,
     start_ts: DateTime<Utc>,
     pub success: Option<bool>,
     pub result: Option<String>,
@@ -54,10 +54,10 @@ impl Frame {
         self.clone().key
     }
 
-    pub fn save(&self, critical: bool, queue: QueueEnum){
+    pub fn save(&self, critical: bool, queue: QueueEnum) {
         if critical {
             self.enqueue(queue)
-        }else {
+        } else {
             self.save_on_local()
         }
     }
@@ -81,19 +81,17 @@ impl Frame {
     pub fn enqueue(&self, queue: QueueEnum) {
         match queue {
             QueueEnum::DummyQueue => {
-                let dq =&mut DQueue::new();
+                let dq = &mut DQueue::new();
                 dq.enqueue(self.get_data());
-            },
-            QueueEnum::KafkaQueue => {
-                unimplemented!()
             }
+            QueueEnum::KafkaQueue => unimplemented!(),
         }
     }
 
     //adds the name and value to breadcrums
     pub fn add_value(&mut self, name: &str, value: serde_json::Value) {
         let mut current_breadcrumbs = self.clone().breadcrumbs.unwrap_or(HashMap::new());
-        current_breadcrumbs.insert(name.to_string(),value);
+        current_breadcrumbs.insert(name.to_string(), value);
         self.breadcrumbs = Some(current_breadcrumbs);
     }
 }

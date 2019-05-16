@@ -1,6 +1,8 @@
 pub trait Resulty
-    where Self: std::fmt::Debug{
+where
+    Self: std::fmt::Debug,
+{
     fn to_string(&self) -> String {
-        format!("{:?}",&self)
+        format!("{:?}", &self)
     }
 }

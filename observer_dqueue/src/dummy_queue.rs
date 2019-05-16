@@ -1,7 +1,7 @@
 use observer_queue::queue::Queue;
 
 pub struct DummyQueue {
-    data_queue: Vec<serde_json::Value>
+    data_queue: Vec<serde_json::Value>,
 }
 
 impl Queue for DummyQueue {
@@ -12,8 +12,6 @@ impl Queue for DummyQueue {
 
 impl DummyQueue {
     pub fn new() -> DummyQueue {
-        DummyQueue{
-            data_queue : vec![]
-        }
+        DummyQueue { data_queue: vec![] }
     }
 }

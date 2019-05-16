@@ -1,5 +1,5 @@
 use crate::frame::Frame;
-use crate::queue::{QueueEnum};
+use crate::queue::QueueEnum;
 use chrono::{DateTime, Utc};
 use serde_derive::{Deserialize, Serialize};
 use std::{
@@ -62,7 +62,7 @@ impl Context {
         self.frame.borrow_mut().success = Some(success);
         let clone = self.clone();
         let temp = clone.frame;
-        temp.clone().into_inner().save(critical,clone.queue);
+        temp.clone().into_inner().save(critical, clone.queue);
         self.modify_context(frame);
         self.modify_add(temp.into_inner());
     }
@@ -86,16 +86,19 @@ impl Context {
     pub fn get_data(&self) -> String {
         serde_json::to_value(self.clone()).unwrap().to_string()
     }
-
 }
-pub fn observe_field(ctx: &Context, name: &str, value: &str){
+pub fn observe_field(ctx: &Context, name: &str, value: &str) {
     unimplemented!()
 }
 
-pub fn observe_string(ctx: &Context, name: &str, value: String){
-    ctx.frame.borrow_mut().add_value(name, serde_json::to_value(value).unwrap());
+pub fn observe_string(ctx: &Context, name: &str, value: String) {
+    ctx.frame
+        .borrow_mut()
+        .add_value(name, serde_json::to_value(value).unwrap());
 }
 
-pub fn observe_i32(ctx: &Context, name: &str, value: i32){
-    ctx.frame.borrow_mut().add_value(name, serde_json::to_value(value).unwrap());
+pub fn observe_i32(ctx: &Context, name: &str, value: i32) {
+    ctx.frame
+        .borrow_mut()
+        .add_value(name, serde_json::to_value(value).unwrap());
 }

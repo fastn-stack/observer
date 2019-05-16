@@ -14,16 +14,6 @@ Plan:
         }
     }
    }
-   [actual json file used contains array of events]
-   [
-    {
-      "name" : "event_id",
-      "critical" : bool,
-      "fields" : {
-        "name" : "String"
-      }
-    },
-   ]
 3[x] Context.observe_i32(), Context.observe_string()
 4[x] rewrite: observe!(name, value) -> observe_<field_type>(ctx, name, value)
     [actual implementation of rewrite: observe_field(ctx, name, value) -> observe_<field_type>(ctx, name, value)]
