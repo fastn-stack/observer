@@ -28,7 +28,7 @@ Plan:
 4[x] rewrite: observe!(name, value) -> observe_<field_type>(ctx, name, value)
     [actual implementation of rewrite: observe_field(ctx, name, value) -> observe_<field_type>(ctx, name, value)]
 5[x] fix frame stuff that we commented out
-6[] dummy_queue implementation (for testing, tutorial etc)
+6[x] dummy_queue implementation (for testing, tutorial etc)
 
 -- production ready
 
