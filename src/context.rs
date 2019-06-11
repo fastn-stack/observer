@@ -9,24 +9,17 @@ use std::{
     path::Path,
 };
 
-pub static LOCAL_FILE_SYSTEM_DIRECTORY: &str = "/Users/venkatesh/observer_files/";
+pub static LOCAL_FILE_SYSTEM_DIRECTORY: &str = "/Users/abrar/observer_files/";
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Context {
     key: String,
     context_id: String,
     queue: QueueEnum,
+    // queue: Box<Queue + 'static>,
     frame: RefCell<Frame>,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
-pub struct SFrame {
-    f_key: String,
-    frame_id: String,
-    breadcrumbs: Option<serde_json::Value>,
-    start_ts: DateTime<Utc>,
-    end_ts: Option<DateTime<Utc>>,
-}
 
 impl Context {
     pub fn new(context_id: String, queue: QueueEnum) -> Context {
@@ -87,6 +80,7 @@ impl Context {
         serde_json::to_value(self.clone()).unwrap().to_string()
     }
 }
+
 pub fn observe_field(ctx: &Context, name: &str, value: &str) {
     unimplemented!()
 }

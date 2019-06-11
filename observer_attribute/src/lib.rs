@@ -32,7 +32,9 @@ struct Event {
 
 lazy_static! {
     static ref EVENTS: HashMap<String, Event> = {
+
         let events_path = env::var("EVENTS_PATH").unwrap_or("".to_string());
+        println!("path::: {}", events_path);
 
         let events_file = File::open(events_path).expect("could not load default.json");
         let events: HashMap<String, Event> = serde_json::from_reader(events_file).expect("invalid json");
@@ -113,6 +115,7 @@ fn rewrite(block: Box<syn::Block>, table_name: String) -> Box<syn::Block> {
                     match *c.func {
                         syn::Expr::Path(p) => {
                             let mut path = p.clone();
+                            // if p.path.segments[0].ident.to_string().eq("observed_field!") {
                             if p.path.segments[0].ident.to_string().eq("observe_field") {
                                 if let syn::Expr::Lit(l) = args[1].clone() {
                                     if let syn::Lit::Str(s) = l.lit.clone() {

@@ -31,6 +31,7 @@ impl Policy {
             updated_on: Utc::now(),
         };
         observe_field(ctx, "pid", "activa_policy_id".to_string());
+        // observed_field!(ctx, "pid", "activa_policy_id".to_string());
         Ok(policy)
     }
 
