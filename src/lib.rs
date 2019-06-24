@@ -23,17 +23,16 @@ lazy_static!{
     .unwrap_or("/var/log/".to_string());
 }
 
-pub fn check_path() {
-    format!("OBSERVER LOGDIR {:?}", LOG_DIR.to_string());
+pub fn check_path() -> String {
+    format!("OBSERVER LOGDIR {:?}", LOG_DIR.to_string())
 }
 
 
 #[cfg(test)]
 pub mod tests {
-    use super::LOG_DIR;
     #[test]
     fn test_log_path(){
-        println!("LOGDIR {:?}", LOG_DIR.to_string());
+        println!("LOGDIR {:?}", super::check_path());
     }
 }
 
