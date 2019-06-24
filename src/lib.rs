@@ -24,7 +24,7 @@ lazy_static!{
 }
 
 pub fn check_path() {
-    println!("OBSERVER LOGDIR {:?}", LOG_DIR.to_string());
+    format!("OBSERVER LOGDIR {:?}", LOG_DIR.to_string());
 }
 
 
