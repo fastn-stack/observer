@@ -4,16 +4,18 @@ Observability for rust servers
 
 # Today
 
-- [ ] verify it checks/runs
-- [ ] document the output somewhere
-- [ ] see how output looks when observed functions are nested
-- [ ] cleanup repo, delete everything that was experiment
+- [x] verify it checks/runs
+- [x] document the output somewhere
+- [x] see how output looks when observed functions are nested
 
 
 - [ ] `observed` should use function name by default
+- [ ] result handling: if result of an observed function implements Resulty,
+      then call resulty.to_string(), else call Display, if none, code cant 
+      compile
 
 # Later
 
 - [ ] how to make function names unique?
 - [ ] integrate with newrelic stuff
-- [ ] Queue trait to be stored on context object3
+- [ ] Queue trait to be stored on context object

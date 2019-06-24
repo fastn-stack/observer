@@ -23,19 +23,20 @@ impl Policy {
         })
     }
 
-    #[observed(policy)]
+    #[observed]
     pub fn create_policy(ctx: &Context, name: &str) -> Result<Policy> {
         let policy = Policy {
             id: "1".into(),
             name: name.into(),
             updated_on: Utc::now(),
         };
+        Policy::update_policy(ctx, "policy_id", "name");
         observe_field(ctx, "pid", "activa_policy_id".to_string());
         // observed_field!(ctx, "pid", "activa_policy_id".to_string());
         Ok(policy)
     }
 
-    #[observed(quote)]
+    #[observed]
     pub fn update_policy(ctx: &Context, pid: &str, _name: &str) -> Result<Policy> {
         let p = Policy::get_by_id(pid)?;
         observe_field(ctx, "qid", 4839);

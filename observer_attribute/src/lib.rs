@@ -25,7 +25,6 @@ enum FieldType {
 
 #[derive(Debug, Deserialize, Clone)]
 struct Event {
-    name: String,
     critical: bool,
     fields: HashMap<String, String>,
 }
@@ -46,17 +45,18 @@ lazy_static! {
 pub fn observed(metadata: TokenStream, input: TokenStream) -> TokenStream {
     validate(metadata.to_string());
 
-    let table_name = get_table_name(metadata.to_string()).replace("\"", "");
-
     let item: syn::Item = syn::parse(input).expect("failed to parse input");
     let f = get_fn(item);
+
     let vis = f.vis;
     let ident = f.ident;
     let inputs = f.decl.inputs;
     let output = f.decl.output;
-    let block = rewrite(f.block, table_name.clone());
+    let table_name = ident.to_string();
 
-    let is_critical = get_event(table_name.clone()).critical;
+    let block = rewrite(f.block, &table_name);
+
+    let is_critical = get_event(&table_name).critical;
 
     let output = quote! {
         #vis fn #ident(#inputs) #output {
@@ -94,7 +94,7 @@ fn get_struct_name(item: syn::Item) -> String {
     }
 }
 
-fn rewrite(block: Box<syn::Block>, table_name: String) -> Box<syn::Block> {
+fn rewrite(block: Box<syn::Block>, table_name: &str) -> Box<syn::Block> {
     let mut stmts: Vec<syn::Stmt> = Vec::new();
 
     for st in block.clone().stmts {
@@ -120,7 +120,7 @@ fn rewrite(block: Box<syn::Block>, table_name: String) -> Box<syn::Block> {
                                 if let syn::Expr::Lit(l) = args[1].clone() {
                                     if let syn::Lit::Str(s) = l.lit.clone() {
                                         let func = "observe_".to_string()
-                                            + &get_func(s.value(), table_name.clone());
+                                            + &get_func(s.value(), table_name);
                                         path.path.segments[0].ident =
                                             syn::Ident::new(&func, Span::call_site());
                                     }
@@ -148,7 +148,7 @@ fn rewrite(block: Box<syn::Block>, table_name: String) -> Box<syn::Block> {
             t => stmts.push(t),
         }
     }
-    let mut new_block = block.clone();
+    let mut new_block = block;
     new_block.stmts = stmts;
     new_block
 }
@@ -159,15 +159,15 @@ fn validate(_metadata: String) {
     }
 }
 
-fn get_event(table: String) -> Event {
-    match EVENTS.clone().get(&table) {
+fn get_event(table: &str) -> Event {
+    match EVENTS.get(table) {
         Some(e) => e.clone(),
         None => panic!("No table named \"{}\" in the events.json file", table),
     }
 }
 
-fn get_func(field: String, table: String) -> String {
-    match get_event(table.clone()).fields.get(&field) {
+fn get_func(field: String, table: &str) -> String {
+    match get_event(table).fields.get(&field) {
         Some(t) => get_rust_type(t.to_string()),
         None => panic!(
             "No field named \"{}\" in the fields for the table \"{}\"",

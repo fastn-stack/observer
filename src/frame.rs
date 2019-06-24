@@ -54,7 +54,7 @@ impl Frame {
         self.clone().key
     }
 
-    pub fn save(&self, critical: bool, queue: QueueEnum) {
+    pub fn save(&self, critical: bool, queue: &QueueEnum) {
         if critical {
             self.enqueue(queue)
         } else {
@@ -78,7 +78,7 @@ impl Frame {
         }
     }
 
-    pub fn enqueue(&self, queue: QueueEnum) {
+    pub fn enqueue(&self, queue: &QueueEnum) {
         match queue {
             QueueEnum::DummyQueue => {
                 let dq = &mut DQueue::new();

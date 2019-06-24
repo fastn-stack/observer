@@ -53,11 +53,9 @@ impl Context {
         self.frame.borrow_mut().end_ts = Some(Utc::now());
         self.frame.borrow_mut().result = Some(result);
         self.frame.borrow_mut().success = Some(success);
-        let clone = self.clone();
-        let temp = clone.frame;
-        temp.clone().into_inner().save(critical, clone.queue);
+        self.frame.borrow().save(critical, &self.queue);
         self.modify_context(frame);
-        self.modify_add(temp.into_inner());
+        self.modify_add(self.frame.clone().into_inner());
     }
 
     pub fn modify_context(&self, new_frame: Frame) {
@@ -72,6 +70,7 @@ impl Context {
         self.clone().key
     }
 
+    // should be function of frame
     pub fn update_end_ts(&self, end_ts: DateTime<Utc>) {
         self.frame.borrow_mut().end_ts = Some(end_ts);
     }
