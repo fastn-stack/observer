@@ -53,9 +53,11 @@ impl Context {
         self.frame.borrow_mut().end_ts = Some(Utc::now());
         self.frame.borrow_mut().result = Some(result);
         self.frame.borrow_mut().success = Some(success);
+        let clone = self.clone();
+        let temp = clone.frame;
         self.frame.borrow().save(critical, &self.queue);
         self.modify_context(frame);
-        self.modify_add(self.frame.clone().into_inner());
+        self.modify_add(temp.into_inner());
     }
 
     pub fn modify_context(&self, new_frame: Frame) {
