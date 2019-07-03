@@ -44,7 +44,6 @@ impl Context {
             .end()
             .set_success(success)
             .set_result(result);
-
         let ctx_current_frame = self.replace_frame(frame);
         ctx_current_frame.save(is_critical,  queue);
         self.frame.borrow_mut().add_sub_frame(ctx_current_frame);
@@ -72,22 +71,70 @@ impl Context {
     }
 }
 
-pub fn observe_string(ctx: &Context, name: &str, value: String) {
+fn observe_it(ctx: &Context, name: &str, value: serde_json::Value) {
     ctx.frame
         .borrow_mut()
         .add_breadcrumbs(name, json!(value));
+}
+
+pub fn observe_string(ctx: &Context, name: &str, value: String) {
+    observe_it(ctx, name, json!(value));
+}
+
+pub fn observe_bool(ctx: &Context, name: &str, value: bool) {
+    observe_it(ctx, name, json!(value))
+}
+
+pub fn observe_char(ctx: &Context, name: &str, value: char) {
+    observe_it(ctx, name, json!(value))
+}
+
+pub fn observe_i8(ctx: &Context, name: &str, value: i8) {
+    observe_it(ctx, name, json!(value))
+}
+
+pub fn observe_i16(ctx: &Context, name: &str, value: i16) {
+    observe_it(ctx, name, json!(value))
 }
 
 pub fn observe_i32(ctx: &Context, name: &str, value: i32) {
-    ctx.frame
-        .borrow_mut()
-        .add_breadcrumbs(name, json!(value));
+    observe_it(ctx, name, json!(value));
 }
 
 pub fn observe_i64(ctx: &Context, name: &str, value: i64) {
-    ctx.frame
-        .borrow_mut()
-        .add_breadcrumbs(name, json!(value));
+    observe_it(ctx, name, json!(value))
+}
+
+pub fn observe_isize(ctx: &Context, name: &str, value: isize) {
+    observe_it(ctx, name, json!(value))
+}
+
+pub fn observe_u8(ctx: &Context, name: &str, value: u8) {
+    observe_it(ctx, name, json!(value))
+}
+
+pub fn observe_u16(ctx: &Context, name: &str, value: u16) {
+    observe_it(ctx, name, json!(value))
+}
+
+pub fn observe_u32(ctx: &Context, name: &str, value: u32) {
+    observe_it(ctx, name, json!(value));
+}
+
+pub fn observe_u64(ctx: &Context, name: &str, value: u64) {
+    observe_it(ctx, name, json!(value))
+}
+
+pub fn observe_usize(ctx: &Context, name: &str, value: usize) {
+    observe_it(ctx, name, json!(value))
+}
+
+pub fn observe_f64(ctx: &Context, name: &str, value: f64) {
+    observe_it(ctx, name, json!(value));
+}
+
+pub fn observe_f32(ctx: &Context, name: &str, value: f32) {
+    observe_it(ctx, name, json!(value));
 }
 
 pub fn observe_field(_ctx: &Context, _name: &str, _value: &str) {
