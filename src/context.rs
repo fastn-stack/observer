@@ -72,18 +72,24 @@ impl Context {
     }
 }
 
-pub fn observe_field(_ctx: &Context, _name: &str, _value: &str) {
-    unimplemented!()
-}
-
 pub fn observe_string(ctx: &Context, name: &str, value: String) {
     ctx.frame
         .borrow_mut()
-        .add_value(name, serde_json::to_value(value).unwrap());
+        .add_breadcrumbs(name, json!(value));
 }
 
 pub fn observe_i32(ctx: &Context, name: &str, value: i32) {
     ctx.frame
         .borrow_mut()
-        .add_value(name, serde_json::to_value(value).unwrap());
+        .add_breadcrumbs(name, json!(value));
+}
+
+pub fn observe_i64(ctx: &Context, name: &str, value: i64) {
+    ctx.frame
+        .borrow_mut()
+        .add_breadcrumbs(name, json!(value));
+}
+
+pub fn observe_field(_ctx: &Context, _name: &str, _value: &str) {
+    unimplemented!()
 }

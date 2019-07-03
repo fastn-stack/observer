@@ -12,7 +12,7 @@ use std::{
 pub struct Frame {
     id: String,
     key: String,
-    pub breadcrumbs: Option<HashMap<String, serde_json::Value>>,
+    pub breadcrumbs: HashMap<String, serde_json::Value>,
     pub success: Option<bool>,
     pub result: Option<serde_json::Value>,
     pub start_time: DateTime<Utc>,
@@ -25,7 +25,7 @@ impl Frame {
         Frame {
             id,
             key: uuid::Uuid::new_v4().to_string(),
-            breadcrumbs: None,
+            breadcrumbs: HashMap::new(),
             success: None,
             result: None,
             start_time: Utc::now(),
@@ -87,10 +87,8 @@ impl Frame {
 
     pub fn enqueue(&self, _queue: &Box<dyn Queue>) {}
 
-    //adds the name and value to breadcrums
-    pub fn add_value(&mut self, name: &str, value: serde_json::Value) {
-        let mut current_breadcrumbs = self.clone().breadcrumbs.unwrap_or(HashMap::new());
-        current_breadcrumbs.insert(name.to_string(), value);
-        self.breadcrumbs = Some(current_breadcrumbs);
+    //adds the name and value to breadcrumbs
+    pub fn add_breadcrumbs(&mut self, name: &str, value: serde_json::Value) {
+        self.breadcrumbs.insert(name.to_string(), value);
     }
 }
