@@ -5,8 +5,6 @@ extern crate serde_json;
 #[macro_use]
 extern crate lazy_static;
 
-#[macro_use]
-extern crate observer_attribute;
 
 pub mod context;
 mod event;
