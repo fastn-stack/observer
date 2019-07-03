@@ -18,11 +18,6 @@ use std::string::ToString;
 use std::{env, fs::File};
 use syn::Item;
 
-enum FieldType {
-    Integer,
-    String,
-}
-
 #[derive(Debug, Deserialize, Clone)]
 struct Event {
     critical: bool,
@@ -31,7 +26,6 @@ struct Event {
 
 lazy_static! {
     static ref EVENTS: HashMap<String, Event> = {
-
         let events_path = env::var("EVENTS_PATH").unwrap_or("".to_string());
         println!("path::: {}", events_path);
 
@@ -43,61 +37,36 @@ lazy_static! {
 
 #[proc_macro_attribute]
 pub fn observed(metadata: TokenStream, input: TokenStream) -> TokenStream {
-    validate(metadata.to_string());
+    // validate(metadata.to_string());
 
     let item: syn::Item = syn::parse(input).expect("failed to parse input");
-    let f = get_fn(item);
+    let mut function = get_fn(item);
 
-    let vis = f.vis;
-    let ident = f.ident;
-    let inputs = f.decl.inputs;
-    let output = f.decl.output;
+    let visibility = function.vis;
+    let ident = function.ident;
+    let inputs = function.decl.inputs;
+    let output = function.decl.output;
+    let block = function.block;
     let table_name = ident.to_string();
 
-    let block = rewrite(f.block, &table_name);
+    let block = rewrite_func_block(block, &table_name);
 
     let is_critical = get_event(&table_name).critical;
 
-    let output = quote! {
-        #vis fn #ident(#inputs) #output {
+    (quote! {
+        #visibility fn #ident(#inputs) #output {
             observe(ctx, #table_name, #is_critical, || {
                 #block
             })
         }
-    };
-    output.into()
+    })
+    .into()
 }
 
-#[proc_macro_attribute]
-pub fn balanced_if(_metadata: TokenStream, input: TokenStream) -> TokenStream {
-    let item: Item = syn::parse(input).expect("failed to parse input");
-
-    log_simple(&format!("{:#?}", item));
-    check_item(&item);
-
-    let output = quote! { #item };
-    output.into()
-}
-
-#[proc_macro_derive(Resulty)]
-pub fn derive_resulty(input: TokenStream) -> TokenStream {
-    let item: syn::Item = syn::parse(input.clone()).expect("failed to parse input");
-    let struc = get_struct_name(item).replace("\"", "");
-    let st = &format!("impl Resulty for {} {}", struc, "{}");
-    proc_macro2::TokenStream::from_str(st).unwrap().into()
-}
-
-fn get_struct_name(item: syn::Item) -> String {
-    match item {
-        Item::Struct(struc) => struc.ident.to_string(),
-        _ => panic!("this attribute macro can only apply on structs"),
-    }
-}
-
-fn rewrite(block: Box<syn::Block>, table_name: &str) -> Box<syn::Block> {
+fn rewrite_func_block(mut block: Box<syn::Block>, table_name: &str) -> Box<syn::Block> {
     let mut stmts: Vec<syn::Stmt> = Vec::new();
 
-    for st in block.clone().stmts {
+    for st in block.stmts.into_iter() {
         match st {
             syn::Stmt::Semi(e, s) => match e {
                 syn::Expr::Macro(m) => {
@@ -111,7 +80,6 @@ fn rewrite(block: Box<syn::Block>, table_name: &str) -> Box<syn::Block> {
                 syn::Expr::Call(c) => {
                     let call = c.clone();
                     let args = call.args.clone();
-
                     match *c.func {
                         syn::Expr::Path(p) => {
                             let mut path = p.clone();
@@ -140,7 +108,12 @@ fn rewrite(block: Box<syn::Block>, table_name: &str) -> Box<syn::Block> {
                                 s,
                             ));
                         }
-                        _ => {}
+                        t => stmts.push(syn::Stmt::Semi(syn::Expr::Call(syn::ExprCall{
+                            attrs: call.attrs,
+                            func: Box::new(t),
+                            paren_token: call.paren_token,
+                            args: call.args,
+                        }), s))
                     }
                 }
                 t => stmts.push(syn::Stmt::Semi(t, s)),
@@ -148,9 +121,34 @@ fn rewrite(block: Box<syn::Block>, table_name: &str) -> Box<syn::Block> {
             t => stmts.push(t),
         }
     }
-    let mut new_block = block;
-    new_block.stmts = stmts;
-    new_block
+    block.stmts = stmts;
+    block
+}
+
+#[proc_macro_attribute]
+pub fn balanced_if(_metadata: TokenStream, input: TokenStream) -> TokenStream {
+    let item: Item = syn::parse(input).expect("failed to parse input");
+
+    log_simple(&format!("{:#?}", item));
+    check_item(&item);
+
+    let output = quote! { #item };
+    output.into()
+}
+
+#[proc_macro_derive(Resulty)]
+pub fn derive_resulty(input: TokenStream) -> TokenStream {
+    let item: syn::Item = syn::parse(input.clone()).expect("failed to parse input");
+    let struc = get_struct_name(item).replace("\"", "");
+    let st = &format!("impl Resulty for {} {}", struc, "{}");
+    proc_macro2::TokenStream::from_str(st).unwrap().into()
+}
+
+fn get_struct_name(item: syn::Item) -> String {
+    match item {
+        Item::Struct(struc) => struc.ident.to_string(),
+        _ => panic!("this attribute macro can only apply on structs"),
+    }
 }
 
 fn validate(_metadata: String) {
