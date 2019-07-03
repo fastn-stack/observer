@@ -1,7 +1,6 @@
 use crate::context::LOCAL_FILE_SYSTEM_DIRECTORY;
 use crate::queue::Queue;
 use chrono::prelude::*;
-use core::borrow::BorrowMut;
 use std::collections::HashMap;
 use std::{
     fs::{create_dir, File},

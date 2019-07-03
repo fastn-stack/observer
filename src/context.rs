@@ -1,12 +1,11 @@
-use crate::frame::Frame;
-use crate::queue::Queue;
-use chrono::{DateTime, Utc};
+use crate::{frame::Frame, queue::Queue, utils, Result};
 use serde_derive::{Deserialize, Serialize};
 use std::{
     cell::RefCell,
     cell::RefMut,
+    fs::File,
+    io::Write,
 };
-
 
 pub static LOCAL_FILE_SYSTEM_DIRECTORY: &str = "/Users/abrar/observer_files/";
 
@@ -59,14 +58,13 @@ impl Context {
         self.frame.borrow_mut()
     }
 
-    pub fn finalise(&self) {
-//        let destination_folder = LOCAL_FILE_SYSTEM_DIRECTORY.to_string() + "context/";
-//        if !Path::new(destination_folder.as_str()).exists() {
-//            create_dir(destination_folder.clone()).unwrap(); // TODO
-//        }
-//        let mut file = File::create(destination_folder + "/" + self.key.as_str()).unwrap();
-//        file.write(self.get_data().as_bytes()).unwrap(); // TODO
-        println!("\n{}", json!(self).to_string())
+    pub fn finalise(&self)-> Result<()> {
+        let path = LOCAL_FILE_SYSTEM_DIRECTORY.to_string() + "context/";
+        let _ = utils::create_dir_if_not_exists(&path);
+        let mut file = File::create(path + "/" + self.key.as_str()).unwrap();
+        file.write(json!(self).to_string().as_bytes()).unwrap(); // TODO
+        println!("{:#?}", self);
+        Ok(())
     }
 
     pub fn get_key(&self) -> String {
@@ -74,7 +72,7 @@ impl Context {
     }
 }
 
-pub fn observe_field(ctx: &Context, name: &str, value: &str) {
+pub fn observe_field(_ctx: &Context, _name: &str, _value: &str) {
     unimplemented!()
 }
 

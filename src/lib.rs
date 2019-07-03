@@ -4,7 +4,7 @@ extern crate serde_derive;
 extern crate serde_json;
 #[macro_use]
 extern crate lazy_static;
-
+extern crate failure;
 
 pub mod context;
 mod event;
@@ -12,6 +12,7 @@ mod frame;
 pub mod observe;
 pub mod queue;
 pub mod resulty;
+mod utils;
 
 pub use crate::context::Context;
 pub use crate::event::{Event, OEvent, OID};

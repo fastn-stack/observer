@@ -12,7 +12,7 @@ impl<T, K> Event<T, K> for T
 where
     K: serde::Serialize,
 {
-    fn map(&self, ctx: &Context, data: &Result<(T, K)>) -> Result<serde_json::Value> {
+    fn map(&self, _ctx: &Context, data: &Result<(T, K)>) -> Result<serde_json::Value> {
         match data {
             Ok((_data, event)) => Ok(serde_json::to_value(event)?),
             Err(e) => Ok(serde_json::Value::String(format!("{}", e))),

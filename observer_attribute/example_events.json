@@ -11,5 +11,19 @@
       "qid" : "int",
       "premium" : "String"
     }
+  },
+  "update_policy1" : {
+    "critical" : false,
+    "fields" : {
+      "qid" : "int",
+      "premium" : "String"
+    }
+  },
+  "update_policy2" : {
+    "critical" : false,
+    "fields" : {
+      "qid" : "int",
+      "premium" : "String"
+    }
   }
 }

@@ -1,5 +1,4 @@
-use crate::{context::Context, event::Event, frame::Frame, resulty::Resulty, Result};
-use chrono::Utc;
+use crate::{context::Context, frame::Frame, resulty::Resulty, Result};
 
 pub fn observe<F, T>(ctx: &Context, table_name: &str, is_critical: bool, run: F) -> Result<T>
 where
