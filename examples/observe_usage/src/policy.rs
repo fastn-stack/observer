@@ -1,11 +1,10 @@
 use chrono::prelude::*;
 use observer::{
-    context::{observe_i32, observe_string},
+    context::{observe_i32},
     observe::observe,
     resulty::Resulty,
     Context, Result,
 };
-use std::string::ToString;
 
 #[derive(Debug, Serialize, Deserialize, Clone, Resulty)]
 pub struct Policy {
@@ -23,20 +22,36 @@ impl Policy {
         })
     }
 
-    #[observed(policy)]
+    #[observed]
     pub fn create_policy(ctx: &Context, name: &str) -> Result<Policy> {
         let policy = Policy {
             id: "1".into(),
             name: name.into(),
             updated_on: Utc::now(),
         };
-        observe_field(ctx, "pid", "activa_policy_id".to_string());
+        let _ = Policy::update_policy(ctx, "policy_id1", "name1");
+        let _ = Policy::update_policy1(ctx, "policy_id2", "name2");
+        let _ = Policy::update_policy2(ctx, "policy_id2", "name2");
         // observed_field!(ctx, "pid", "activa_policy_id".to_string());
         Ok(policy)
     }
 
-    #[observed(quote)]
+    #[observed]
     pub fn update_policy(ctx: &Context, pid: &str, _name: &str) -> Result<Policy> {
+        let p = Policy::get_by_id(pid)?;
+        observe_field(ctx, "qid", 4839);
+        Ok(p)
+    }
+
+    #[observed]
+    pub fn update_policy1(ctx: &Context, pid: &str, _name: &str) -> Result<Policy> {
+        let p = Policy::get_by_id(pid)?;
+        observe_field(ctx, "qid", 4839);
+        Ok(p)
+    }
+
+    #[observed]
+    pub fn update_policy2(ctx: &Context, pid: &str, _name: &str) -> Result<Policy> {
         let p = Policy::get_by_id(pid)?;
         observe_field(ctx, "qid", 4839);
         Ok(p)

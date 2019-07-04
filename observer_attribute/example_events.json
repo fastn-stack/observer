@@ -1,13 +1,25 @@
 {
-  "policy" : {
-    "name" : "policy",
+  "create_policy" : {
     "critical" : true,
     "fields" : {
       "pid" : "String"
     }
   },
-  "quote" : {
-    "name" : "quote",
+  "update_policy" : {
+    "critical" : false,
+    "fields" : {
+      "qid" : "int",
+      "premium" : "String"
+    }
+  },
+  "update_policy1" : {
+    "critical" : false,
+    "fields" : {
+      "qid" : "int",
+      "premium" : "String"
+    }
+  },
+  "update_policy2" : {
     "critical" : false,
     "fields" : {
       "qid" : "int",
