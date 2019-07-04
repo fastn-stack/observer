@@ -1,13 +1,16 @@
 [package]
 name = "observer_attribute"
 version = "0.1.0"
-authors = ["Amit Upadhyay <code@amitu.com>"]
+authors = ["AbrarNitk <abrar.nitk@gmail.com>"]
 edition = "2018"
+description = "Observer Attributes"
+license = "MIT"
+include = ["src/**/*", "Cargo.toml"]
+readme = "README.md"
+keywords = ["observer", "logging", "events"]
 
 [lib]
 proc-macro = true
-
-
 
 [dependencies]
 quote = "0.6"

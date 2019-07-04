@@ -27,20 +27,18 @@ struct Event {
 lazy_static! {
     static ref EVENTS: HashMap<String, Event> = {
         let events_path = env::var("EVENTS_PATH").unwrap_or("".to_string());
-        println!("path::: {}", events_path);
-
+        println!("Events Path:: {}", events_path);
         let events_file = File::open(events_path).expect("could not load default.json");
-        let events: HashMap<String, Event> = serde_json::from_reader(events_file).expect("invalid json");
+        let events: HashMap<String, Event> =
+            serde_json::from_reader(events_file).expect("invalid json");
         events
     };
 }
 
 #[proc_macro_attribute]
-pub fn observed(metadata: TokenStream, input: TokenStream) -> TokenStream {
-    // validate(metadata.to_string());
-
+pub fn observed(_metadata: TokenStream, input: TokenStream) -> TokenStream {
     let item: syn::Item = syn::parse(input).expect("failed to parse input");
-    let mut function = get_fn(item);
+    let function = get_fn(item);
 
     let visibility = function.vis;
     let ident = function.ident;
@@ -48,11 +46,8 @@ pub fn observed(metadata: TokenStream, input: TokenStream) -> TokenStream {
     let output = function.decl.output;
     let block = function.block;
     let table_name = ident.to_string();
-
     let block = rewrite_func_block(block, &table_name);
-
     let is_critical = get_event(&table_name).critical;
-
     (quote! {
         #visibility fn #ident(#inputs) #output {
             observe(ctx, #table_name, #is_critical, || {
@@ -83,7 +78,7 @@ fn rewrite_func_block(mut block: Box<syn::Block>, table_name: &str) -> Box<syn::
                     match *c.func {
                         syn::Expr::Path(p) => {
                             let mut path = p.clone();
-                            // if p.path.segments[0].ident.to_string().eq("observed_field!") {
+                            // if p.path.segments[0].ident.to_string().eq("observed_field!") { TODO
                             if p.path.segments[0].ident.to_string().eq("observe_field") {
                                 if let syn::Expr::Lit(l) = args[1].clone() {
                                     if let syn::Lit::Str(s) = l.lit.clone() {
@@ -108,12 +103,15 @@ fn rewrite_func_block(mut block: Box<syn::Block>, table_name: &str) -> Box<syn::
                                 s,
                             ));
                         }
-                        t => stmts.push(syn::Stmt::Semi(syn::Expr::Call(syn::ExprCall{
-                            attrs: call.attrs,
-                            func: Box::new(t),
-                            paren_token: call.paren_token,
-                            args: call.args,
-                        }), s))
+                        t => stmts.push(syn::Stmt::Semi(
+                            syn::Expr::Call(syn::ExprCall {
+                                attrs: call.attrs,
+                                func: Box::new(t),
+                                paren_token: call.paren_token,
+                                args: call.args,
+                            }),
+                            s,
+                        )),
                     }
                 }
                 t => stmts.push(syn::Stmt::Semi(t, s)),
@@ -129,7 +127,7 @@ fn rewrite_func_block(mut block: Box<syn::Block>, table_name: &str) -> Box<syn::
 pub fn balanced_if(_metadata: TokenStream, input: TokenStream) -> TokenStream {
     let item: Item = syn::parse(input).expect("failed to parse input");
 
-    log_simple(&format!("{:#?}", item));
+    // log_simple(&format!("{:#?}", item));
     check_item(&item);
 
     let output = quote! { #item };
@@ -148,12 +146,6 @@ fn get_struct_name(item: syn::Item) -> String {
     match item {
         Item::Struct(struc) => struc.ident.to_string(),
         _ => panic!("this attribute macro can only apply on structs"),
-    }
-}
-
-fn validate(_metadata: String) {
-    if false {
-        panic!();
     }
 }
 
@@ -184,9 +176,9 @@ fn get_rust_type(storage_type: String) -> String {
     }
 }
 
-fn get_table_name(metadata: String) -> String {
-    metadata
-}
+//fn get_table_name(metadata: String) -> String {
+//    metadata
+//}
 
 fn get_fn(item: Item) -> syn::ItemFn {
     match item {
@@ -195,22 +187,22 @@ fn get_fn(item: Item) -> syn::ItemFn {
     }
 }
 
-fn log_simple(msg: &str) {
-    use std::io::prelude::*;
+//fn log_simple(msg: &str) {
+//    use std::io::prelude::*;
+//
+//    let path = std::path::Path::new("/tmp/log.txt");
+//    let mut file = std::fs::OpenOptions::new().write(true).open(&path).unwrap();
+//    file.write_all(msg.as_bytes()).unwrap();
+//    file.write_all("\n".as_bytes()).unwrap();
+//}
 
-    let path = std::path::Path::new("/tmp/log.txt");
-    let mut file = std::fs::OpenOptions::new().write(true).open(&path).unwrap();
-    file.write_all(msg.as_bytes()).unwrap();
-    file.write_all("\n".as_bytes()).unwrap();
-}
-
-fn log(msg: &str, path: &str) {
-    use std::io::prelude::*;
-    let path = std::path::Path::new(path);
-    let mut file = std::fs::OpenOptions::new().write(true).open(&path).unwrap();
-    file.write_all(msg.as_bytes()).unwrap();
-    file.write_all("\n".as_bytes()).unwrap();
-}
+//fn log(msg: &str, path: &str) {
+//    use std::io::prelude::*;
+//    let path = std::path::Path::new(path);
+//    let mut file = std::fs::OpenOptions::new().write(true).open(&path).unwrap();
+//    file.write_all(msg.as_bytes()).unwrap();
+//    file.write_all("\n".as_bytes()).unwrap();
+//}
 
 fn check_item(item: &Item) {
     match item {
