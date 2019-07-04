@@ -3,6 +3,12 @@ name = "observer"
 version = "0.1.0"
 authors = ["AbrarNitk <abrar.nitk@gmail.com>"]
 edition = "2018"
+description = "Observer"
+license = "MIT"
+include = ["src/**/*", "Cargo.toml"]
+readme = "README.md"
+keywords = ["observer", "logging", "events logging", "function logging"]
+repository = "https://github.com/ackotech/observer"
 
 [dependencies]
 serde = "~1.0.27"
@@ -18,10 +24,10 @@ observer_attribute = "0.1.0"
 version = "0.4"
 features = ["serde"]
 
-[dependencies.observer_dqueue]
-path = "./observer_dqueue"
-version = "0.1.0"
-
-[dependencies.observer_queue]
-path = "./observer_queue"
-version = "0.1.0"
+#[dependencies.observer_dqueue]
+#path = "./observer_dqueue"
+#version = "0.1.0"
+#
+#[dependencies.observer_queue]
+#path = "./observer_queue"
+#version = "0.1.0"

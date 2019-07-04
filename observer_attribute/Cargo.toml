@@ -8,6 +8,7 @@ license = "MIT"
 include = ["src/**/*", "Cargo.toml"]
 readme = "README.md"
 keywords = ["observer", "logging", "events"]
+repository = "https://github.com/ackotech/observer"
 
 [lib]
 proc-macro = true
