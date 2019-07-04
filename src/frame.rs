@@ -1,12 +1,8 @@
-use crate::context::LOCAL_FILE_SYSTEM_DIRECTORY;
-use crate::queue::Queue;
+use crate::context::{is_log_dir_exists, LOG_DIR};
+use crate::{queue::Queue, utils};
 use chrono::prelude::*;
 use std::collections::HashMap;
-use std::{
-    fs::{create_dir, File},
-    io::Write,
-    path::Path,
-};
+use std::io::Write;
 
 #[derive(Serialize, Debug, Clone, Deserialize)]
 pub struct Frame {
@@ -71,23 +67,28 @@ impl Frame {
     }
 
     pub fn save_on_local(&self) {
-        let destination_folder = LOCAL_FILE_SYSTEM_DIRECTORY.to_string() + self.id.as_str();
-
-        if !Path::new(destination_folder.as_str()).exists() {
-            create_dir(destination_folder.clone()).unwrap(); // TODO
-        }
-        let mut file = File::create(destination_folder + "/" + self.id.as_str()).unwrap();
-        let data = json!(self);
-        let result = file.write(data.to_string().as_bytes());
-
-        if let Err(e) = result {
-            println!("Error while saving on the local file system: {:?}", e);
+        if is_log_dir_exists() {
+            let path = LOG_DIR.to_owned() + self.id.as_str();
+            if let Err(err) = utils::create_dir_if_not_exists(&path) {
+                println!("Not able to create log_dir path: {}, {:?}", path, err);
+                return;
+            }
+            match utils::create_file(&path, self.id.as_str()) {
+                Ok(mut file) => {
+                    if let Err(err) = file.write(json!(self).to_string().as_bytes()) {
+                        println!("Frame write error {:#?}", err);
+                    };
+                }
+                Err(err) => {
+                    println!("Frame file create error {:#?}", err);
+                }
+            };
         }
     }
 
     pub fn enqueue(&self, _queue: &Box<dyn Queue>) {}
 
-    //adds the name and value to breadcrumbs
+    //adding breadcrumbs
     pub fn add_breadcrumbs(&mut self, name: &str, value: serde_json::Value) {
         self.breadcrumbs.insert(name.to_string(), value);
     }

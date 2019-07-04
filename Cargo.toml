@@ -12,6 +12,7 @@ failure = "~0.1.1"
 uuid = { version = "0.7", features = ["serde", "v4"] }
 lazy_static = "~1.2.0"
 typetag = "0.1"
+observer_attribute = "0.1.0"
 
 [dependencies.chrono]
 version = "0.4"
@@ -23,8 +24,4 @@ version = "0.1.0"
 
 [dependencies.observer_queue]
 path = "./observer_queue"
-version = "0.1.0"
-
-[dependencies.observer_attribute]
-path = "./observer_attribute"
 version = "0.1.0"

@@ -5,6 +5,7 @@ extern crate serde_json;
 #[macro_use]
 extern crate lazy_static;
 extern crate failure;
+extern crate observer_attribute;
 
 pub mod context;
 mod event;
@@ -20,20 +21,18 @@ pub use crate::observe::observe;
 use std::env;
 pub type Result<T> = std::result::Result<T, failure::Error>;
 
-lazy_static!{
-    static ref LOG_DIR: String = env::var("OBSERVER_LOGS")
-    .unwrap_or("/var/log/".to_string());
+lazy_static! {
+    static ref LOG_DIR: String = env::var("OBSERVER_LOGS").unwrap_or("/var/log/".to_string());
 }
 
 pub fn check_path() -> String {
     format!("OBSERVER LOGDIR {:?}", LOG_DIR.to_string())
 }
 
-
 #[cfg(test)]
 pub mod tests {
     #[test]
-    fn test_log_path(){
+    fn test_log_path() {
         println!("LOGDIR {:?}", super::check_path());
     }
 }

@@ -12,7 +12,13 @@ where
             Ok(response)
         }
         Err(err) => {
-            ctx.end_frame(temp_frame, json!(format!("{:?}", err)), false, is_critical, &ctx.queue);
+            ctx.end_frame(
+                temp_frame,
+                json!(format!("{:?}", err)),
+                false,
+                is_critical,
+                &ctx.queue,
+            );
             Err(err)
         }
     };
