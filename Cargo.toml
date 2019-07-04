@@ -7,7 +7,7 @@ description = "Observer"
 license = "MIT"
 include = ["src/**/*", "Cargo.toml"]
 readme = "README.md"
-keywords = ["observer", "logging", "events_logging", "function logging"]
+keywords = ["observer", "logging", "events_logging", "function_logging"]
 repository = "https://github.com/ackotech/observer"
 
 [dependencies]
