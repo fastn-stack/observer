@@ -13,7 +13,7 @@ lazy_static! {
         );
         match utils::create_dir_all_if_not_exists(&log_dir) {
             Ok(_) => {
-                println!("Observer LOG_DIR :: {}", log_dir);
+                // println!("Observer LOG_DIR :: {}", log_dir);
                 unsafe { DIR_EXISTS = true }
             }
             Err(err) => {
@@ -28,7 +28,7 @@ lazy_static! {
         let context_dir = format!("{}{}/", LOG_DIR.to_string(), "context");
         match utils::create_dir_all_if_not_exists(&context_dir) {
             Ok(_) => {
-                println!("Context LOG_DIR :: {}", context_dir);
+                // println!("Context LOG_DIR :: {}", context_dir);
                 unsafe { CON_DIR_EXISTS = true }
             }
             Err(err) => {

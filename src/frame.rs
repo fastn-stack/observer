@@ -73,7 +73,7 @@ impl Frame {
                 println!("Not able to create log_dir path: {}, {:?}", path, err);
                 return;
             }
-            match utils::create_file(&path, self.id.as_str()) {
+            match utils::create_file(&path, self.key.as_str()) {
                 Ok(mut file) => {
                     if let Err(err) = file.write(json!(self).to_string().as_bytes()) {
                         println!("Frame write error {:#?}", err);
@@ -86,7 +86,9 @@ impl Frame {
         }
     }
 
-    pub fn enqueue(&self, _queue: &Box<dyn Queue>) {}
+    pub fn enqueue(&self, queue: &Box<dyn Queue>) {
+        queue.enqueue(json!(self))
+    }
 
     //adding breadcrumbs
     pub fn add_breadcrumbs(&mut self, name: &str, value: serde_json::Value) {

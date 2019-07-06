@@ -31,7 +31,7 @@ impl Policy {
         };
         let _ = Policy::update_policy(ctx, "policy_id1", "name1");
         let _ = Policy::update_policy1(ctx, "policy_id2", "name2");
-        let _ = Policy::update_policy2(ctx, "policy_id2", "name2");
+//        let _ = Policy::update_policy2(ctx, "policy_id2", "name2");
         // observed_field!(ctx, "pid", "activa_policy_id".to_string());
         Ok(policy)
     }

@@ -2,7 +2,7 @@ use std::fmt::Debug;
 
 #[typetag::serde(tag = "type", content = "value")]
 pub trait Queue: Debug {
-    fn enqueue(&mut self, data: serde_json::Value);
+    fn enqueue(&self, data: serde_json::Value);
 }
 
 #[derive(Serialize, Debug, Deserialize)]
@@ -12,7 +12,7 @@ pub struct DemoQueue {
 
 #[typetag::serde(name = "Abc")]
 impl Queue for DemoQueue {
-    fn enqueue(&mut self, data: serde_json::Value) {
-        println!("Data: {}", data)
+    fn enqueue(&self, data: serde_json::Value) {
+        println!("Data Here: {}", data)
     }
 }
