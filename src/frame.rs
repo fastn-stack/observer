@@ -3,8 +3,11 @@ use crate::{queue::Queue, utils};
 use chrono::prelude::*;
 use std::collections::HashMap;
 use std::io::Write;
+use ackorelic::newrelic_fn::{nr_end_custom_segment, nr_start_custom_segment};
+use ackorelic::acko_segment::Segment;
+use std::fmt::{self, Debug};
 
-#[derive(Serialize, Debug, Clone, Deserialize)]
+#[derive(Serialize, Deserialize)]
 pub struct Frame {
     id: String,
     key: String,
@@ -14,11 +17,42 @@ pub struct Frame {
     pub start_time: DateTime<Utc>,
     pub end_time: Option<DateTime<Utc>>,
     pub sub_frames: Vec<Frame>,
+    #[serde(skip)]
+    segment: Option<Segment>,
 }
+
+impl Clone for Frame {
+    fn clone(&self) -> Self {
+        Frame::new(self.id.clone())
+    }
+}
+
+impl Debug for Frame {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Frame {{
+    id: {},
+    key: {},
+    breadcrumbs: {:?},
+    success: {:?},
+    result: {:?},
+    start_time: {:?},
+    end_time: {:?},
+    sub_frames: {:?}
+}}
+",
+    self.id, self.key, self.breadcrumbs,
+    self.success, self.result, self.start_time,
+    self.end_time, self.sub_frames,)
+
+    }
+}
+
+
 
 impl Frame {
     pub fn new(id: String) -> Frame {
         Frame {
+            segment: Some(nr_start_custom_segment(&id)),
             id,
             key: uuid::Uuid::new_v4().to_string(),
             breadcrumbs: HashMap::new(),
@@ -36,6 +70,10 @@ impl Frame {
     }
 
     pub fn end(&mut self) -> &mut Self {
+        // TODO: For new_relic purpose, Later need to remove this dependency
+        if let Some(segment) = self.segment.take() {
+            nr_end_custom_segment(segment);
+        }
         self.end_time = Some(Utc::now());
         self
     }

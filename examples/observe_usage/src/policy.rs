@@ -1,10 +1,5 @@
 use chrono::prelude::*;
-use observer::{
-    context::{observe_i32},
-    observe::observe,
-    resulty::Resulty,
-    Context, Result,
-};
+use observer::{context::observe_i32, observe::observe, resulty::Resulty, Context, Result};
 
 #[derive(Debug, Serialize, Deserialize, Clone, Resulty)]
 pub struct Policy {
@@ -31,7 +26,7 @@ impl Policy {
         };
         let _ = Policy::update_policy(ctx, "policy_id1", "name1");
         let _ = Policy::update_policy1(ctx, "policy_id2", "name2");
-//        let _ = Policy::update_policy2(ctx, "policy_id2", "name2");
+        //        let _ = Policy::update_policy2(ctx, "policy_id2", "name2");
         // observed_field!(ctx, "pid", "activa_policy_id".to_string());
         Ok(policy)
     }

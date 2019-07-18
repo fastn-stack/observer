@@ -1,9 +1,11 @@
 use crate::{frame::Frame, queue::Queue, utils, Result};
 use serde_derive::{Deserialize, Serialize};
 use std::{cell::RefCell, cell::RefMut, env, io::Write};
+use ackorelic::{newrelic_fn::{nr_start_web_transaction, nr_end_transaction}};
 
 pub static mut DIR_EXISTS: bool = false;
 pub static mut CON_DIR_EXISTS: bool = false;
+
 lazy_static! {
     pub static ref LOG_DIR: String = {
         let log_dir = format!(
@@ -61,6 +63,8 @@ pub struct Context {
 
 impl Context {
     pub fn new(id: String, queue: Box<Queue>) -> Context {
+        // TODO: For new_relic purpose, Later need to remove this dependency
+        nr_start_web_transaction(&id);
         Context {
             id,
             frame: RefCell::new(Frame::new("main".to_string())),
@@ -99,6 +103,9 @@ impl Context {
     }
 
     pub fn finalise(&self) -> Result<()> {
+        // TODO: For new_relic purpose, Later need to remove this dependency
+        nr_end_transaction();
+
         if is_ctx_dir_exists() {
             match utils::create_file(&CONTEXT_DIR, self.key.as_str()) {
                 Ok(mut file) => {

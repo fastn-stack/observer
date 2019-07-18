@@ -31,10 +31,32 @@ pub fn check_path() -> String {
 
 #[cfg(test)]
 pub mod tests {
+    use ackorelic::{App, NewRelicConfig, newrelic_fn::{
+        nr_start_custom_segment, nr_end_custom_segment, nr_start_web_transaction, nr_end_transaction
+    }};
+    use std::thread;
+    use std::time::Duration;
+
     #[test]
     fn test_log_path() {
         println!("LOGDIR {:?}", super::check_path());
     }
+
+    #[test]
+    fn new_relic_test() {
+        let mut count = 0;
+        nr_start_web_transaction("test_transaction");
+        while count < 1000 {
+            let seg1 = nr_start_custom_segment("db_pool");
+            thread::sleep(Duration::from_millis(10));
+            nr_end_custom_segment(seg1);
+            count += 1;
+        }
+        println!("Events Completed");
+        nr_end_transaction()
+    }
+
+
 }
 
 /*

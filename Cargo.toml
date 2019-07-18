@@ -24,6 +24,9 @@ observer_attribute = "0.1.0"
 version = "0.4"
 features = ["serde"]
 
+[dependencies.ackorelic]
+version = "0.1.1"
+
 #[dependencies.observer_dqueue]
 #path = "./observer_dqueue"
 #version = "0.1.0"
