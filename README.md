@@ -87,6 +87,7 @@ fn main() {
         Box::new(DemoQueue{name: "Abrar".to_string()})
     );
     let _result = observe_me(&ctx, 12);
+    ctx.finalise();
 }
 ```
 
