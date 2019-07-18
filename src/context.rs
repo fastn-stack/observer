@@ -1,7 +1,7 @@
 use crate::{frame::Frame, queue::Queue, utils, Result};
+use ackorelic::newrelic_fn::{nr_end_transaction, nr_start_web_transaction};
 use serde_derive::{Deserialize, Serialize};
 use std::{cell::RefCell, cell::RefMut, env, io::Write};
-use ackorelic::{newrelic_fn::{nr_start_web_transaction, nr_end_transaction}};
 
 pub static mut DIR_EXISTS: bool = false;
 pub static mut CON_DIR_EXISTS: bool = false;
@@ -10,7 +10,7 @@ lazy_static! {
     pub static ref LOG_DIR: String = {
         let log_dir = format!(
             "{}/{}",
-            env::var("LOG_DIR").unwrap_or("/var/log".to_owned()),
+            env::var("LOG_DIR").unwrap_or_else(|_| "/var/log".to_owned()),
             "observer/"
         );
         match utils::create_dir_all_if_not_exists(&log_dir) {
@@ -90,7 +90,7 @@ impl Context {
             .set_success(success)
             .set_result(result);
         let ctx_current_frame = self.replace_frame(frame);
-        ctx_current_frame.save(is_critical, queue);
+        ctx_current_frame.save(is_critical, &queue);
         self.frame.borrow_mut().add_sub_frame(ctx_current_frame);
     }
 

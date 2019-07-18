@@ -22,7 +22,7 @@ use std::env;
 pub type Result<T> = std::result::Result<T, failure::Error>;
 
 lazy_static! {
-    static ref LOG_DIR: String = env::var("OBSERVER_LOGS").unwrap_or("/var/log/".to_string());
+    static ref LOG_DIR: String = env::var("OBSERVER_LOGS").unwrap_or_else(|_| "/var/log/".to_string());
 }
 
 pub fn check_path() -> String {
@@ -31,9 +31,13 @@ pub fn check_path() -> String {
 
 #[cfg(test)]
 pub mod tests {
-    use ackorelic::{App, NewRelicConfig, newrelic_fn::{
-        nr_start_custom_segment, nr_end_custom_segment, nr_start_web_transaction, nr_end_transaction
-    }};
+    use ackorelic::{
+        newrelic_fn::{
+            nr_end_custom_segment, nr_end_transaction, nr_start_custom_segment,
+            nr_start_web_transaction,
+        },
+        App, NewRelicConfig,
+    };
     use std::thread;
     use std::time::Duration;
 
@@ -55,7 +59,6 @@ pub mod tests {
         println!("Events Completed");
         nr_end_transaction()
     }
-
 
 }
 

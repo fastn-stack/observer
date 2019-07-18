@@ -1,11 +1,11 @@
 use crate::context::{is_log_dir_exists, LOG_DIR};
 use crate::{queue::Queue, utils};
+use ackorelic::acko_segment::Segment;
+use ackorelic::newrelic_fn::{nr_end_custom_segment, nr_start_custom_segment};
 use chrono::prelude::*;
 use std::collections::HashMap;
-use std::io::Write;
-use ackorelic::newrelic_fn::{nr_end_custom_segment, nr_start_custom_segment};
-use ackorelic::acko_segment::Segment;
 use std::fmt::{self, Debug};
+use std::io::Write;
 
 #[derive(Serialize, Deserialize)]
 pub struct Frame {
@@ -29,7 +29,9 @@ impl Clone for Frame {
 
 impl Debug for Frame {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Frame {{
+        write!(
+            f,
+            "Frame {{
     id: {},
     key: {},
     breadcrumbs: {:?},
@@ -40,14 +42,17 @@ impl Debug for Frame {
     sub_frames: {:?}
 }}
 ",
-    self.id, self.key, self.breadcrumbs,
-    self.success, self.result, self.start_time,
-    self.end_time, self.sub_frames,)
-
+            self.id,
+            self.key,
+            self.breadcrumbs,
+            self.success,
+            self.result,
+            self.start_time,
+            self.end_time,
+            self.sub_frames,
+        )
     }
 }
-
-
 
 impl Frame {
     pub fn new(id: String) -> Frame {
