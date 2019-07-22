@@ -26,12 +26,12 @@ struct Event {
 
 lazy_static! {
     static ref EVENTS: HashMap<String, Event> = {
-        let events_path = env::var("EVENTS_PATH").unwrap_or("".to_string());
+        let events_path =
+            env::var("EVENTS_PATH").expect("Set env variable of EVENTS_PATH to use observer");
         println!("Events Path:: {}", events_path);
-        let events_file = File::open(events_path).expect("could not load default.json");
-        let events: HashMap<String, Event> =
-            serde_json::from_reader(events_file).expect("invalid json");
-        events
+        let events_file =
+            File::open(&events_path).expect(&format!("Not able to load {}", events_path));
+        serde_json::from_reader(events_file).expect(&format!("Json parse error {}", events_path))
     };
 }
 
@@ -64,14 +64,14 @@ fn rewrite_func_block(mut block: Box<syn::Block>, table_name: &str) -> Box<syn::
     for st in block.stmts.into_iter() {
         match st {
             syn::Stmt::Semi(e, s) => match e {
-                syn::Expr::Macro(m) => {
-                    let mut new_macro = m.clone();
-                    if m.mac.path.segments[0].ident.to_string().eq("println") {
-                        new_macro.mac.path.segments[0].ident =
-                            syn::Ident::new("format", Span::call_site());
-                    }
-                    stmts.push(syn::Stmt::Semi(syn::Expr::Macro(new_macro), s));
-                }
+                //                syn::Expr::Macro(m) => {
+                //                    let mut new_macro = m.clone();
+                //                    if m.mac.path.segments[0].ident.to_string().eq("println") {
+                //                        new_macro.mac.path.segments[0].ident =
+                //                            syn::Ident::new("format", Span::call_site());
+                //                    }
+                //                    stmts.push(syn::Stmt::Semi(syn::Expr::Macro(new_macro), s));
+                //                }
                 syn::Expr::Call(c) => {
                     let call = c.clone();
                     let args = call.args.clone();
