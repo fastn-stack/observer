@@ -22,7 +22,8 @@ use std::env;
 pub type Result<T> = std::result::Result<T, failure::Error>;
 
 lazy_static! {
-    static ref LOG_DIR: String = env::var("OBSERVER_LOGS").unwrap_or_else(|_| "/var/log/".to_string());
+    static ref LOG_DIR: String =
+        env::var("OBSERVER_LOGS").unwrap_or_else(|_| "/var/log/".to_string());
 }
 
 pub fn check_path() -> String {
