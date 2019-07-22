@@ -10,6 +10,12 @@ serde_json = "~1"
 serde_derive = "~1"
 serde = "~1"
 uuid = { version = "0.7", features = ["serde", "v4"] }
+postgres = "~0.15.2"
+chrono-tz = "~0.4"
+lazy_static = "~1.2.0"
+derive_more = "0.14.0"
+ackorelic = "0.1.5"
+# ackorelic = {git = "https://github.com/ackotech/ackorelic", branch="query_parse"}
 
 [dependencies.observer_attribute]
 path="../../observer_attribute"
@@ -20,3 +26,21 @@ path="../../"
 [dependencies.chrono]
 version = "0.4"
 features = ["serde"]
+
+[dependencies.bigdecimal]
+version = "0.0.10"
+features = ["serde"]
+
+[dependencies.diesel]
+version = "= 1.3.3"
+features = [
+    "postgres",
+    "64-column-tables",
+    "serde_json",
+    "network-address",
+    "chrono",
+    "bigdecimal",
+    "num-bigint",
+    "num-integer",
+    "num-traits",
+]

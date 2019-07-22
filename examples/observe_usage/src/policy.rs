@@ -1,5 +1,7 @@
 use chrono::prelude::*;
 use observer::{context::observe_i32, observe::observe, resulty::Resulty, Context, Result};
+use std::{time, thread};
+use crate::db_test::db_call;
 
 #[derive(Debug, Serialize, Deserialize, Clone, Resulty)]
 pub struct Policy {
@@ -19,6 +21,8 @@ impl Policy {
 
     #[observed]
     pub fn create_policy(ctx: &Context, name: &str) -> Result<Policy> {
+        thread::sleep(time::Duration::from_secs(3));
+        db_call();
         let policy = Policy {
             id: "1".into(),
             name: name.into(),
@@ -33,6 +37,8 @@ impl Policy {
 
     #[observed]
     pub fn update_policy(ctx: &Context, pid: &str, _name: &str) -> Result<Policy> {
+        print!("{}", "Coming here");
+        thread::sleep(time::Duration::from_secs(3));
         let p = Policy::get_by_id(pid)?;
         observe_field(ctx, "qid", 4839);
         Ok(p)
@@ -40,6 +46,7 @@ impl Policy {
 
     #[observed]
     pub fn update_policy1(ctx: &Context, pid: &str, _name: &str) -> Result<Policy> {
+        thread::sleep(time::Duration::from_secs(3));
         let p = Policy::get_by_id(pid)?;
         observe_field(ctx, "qid", 4839);
         Ok(p)
