@@ -18,14 +18,13 @@ failure = "~0.1.1"
 uuid = { version = "0.7", features = ["serde", "v4"] }
 lazy_static = "~1.2.0"
 typetag = "0.1"
-observer_attribute = "0.1.0"
+observer_attribute = "0.1.1"
+ackorelic = "0.1.5"
+# ackorelic = {git = "https://github.com/ackotech/ackorelic", branch="query_parse"}
 
 [dependencies.chrono]
 version = "0.4"
 features = ["serde"]
-
-[dependencies.ackorelic]
-version = "0.1.1"
 
 #[dependencies.observer_dqueue]
 #path = "./observer_dqueue"
