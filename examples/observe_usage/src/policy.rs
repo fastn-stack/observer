@@ -1,8 +1,9 @@
 use chrono::prelude::*;
-use observer::{context::observe_i32, Context, Result};
+use observer::{Context, Result};
 use std::{time, thread};
 use crate::db_test::db_call;
 use observer::prelude::*;
+use std::collections::HashMap;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Policy {
@@ -30,7 +31,10 @@ impl Policy {
             updated_on: Utc::now(),
         };
         observe_field(ctx, "pid", "activa_policy_id");
-        observe_result(ctx, 323232);
+        let mut hm = HashMap::new();
+        hm.insert("sds", 1);
+        let t: Vec<String> = Vec::new();
+        observe_result(ctx, &t);
         let _ = Policy::update_policy(ctx, "policy_id1", "name1");
         let _ = Policy::update_policy1(ctx, "policy_id2", "name2");
         //        let _ = Policy::update_policy2(ctx, "policy_id2", "name2");
