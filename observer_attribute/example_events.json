@@ -1,7 +1,7 @@
 {
   "create_policy" : {
     "critical" : true,
-    "result_type": "i32",
+    "result_type": "list",
     "fields" : {
       "pid" : "string"
     }
