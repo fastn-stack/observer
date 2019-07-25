@@ -1,9 +1,10 @@
 use chrono::prelude::*;
-use observer::{context::observe_i32, observe::observe, resulty::Resulty, Context, Result};
+use observer::{context::observe_i32, Context, Result};
 use std::{time, thread};
 use crate::db_test::db_call;
+use observer::prelude::*;
 
-#[derive(Debug, Serialize, Deserialize, Clone, Resulty)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Policy {
     pub id: String,
     pub name: String,
@@ -19,15 +20,17 @@ impl Policy {
         })
     }
 
-    #[observed]
+    #[observed(with_result)]
     pub fn create_policy(ctx: &Context, name: &str) -> Result<Policy> {
-        thread::sleep(time::Duration::from_secs(3));
+        // thread::sleep(time::Duration::from_secs(3));
         db_call();
         let policy = Policy {
             id: "1".into(),
             name: name.into(),
             updated_on: Utc::now(),
         };
+        observe_field(ctx, "pid", "activa_policy_id");
+        observe_result(ctx, 323232);
         let _ = Policy::update_policy(ctx, "policy_id1", "name1");
         let _ = Policy::update_policy1(ctx, "policy_id2", "name2");
         //        let _ = Policy::update_policy2(ctx, "policy_id2", "name2");
@@ -35,28 +38,35 @@ impl Policy {
         Ok(policy)
     }
 
-    #[observed]
+    #[observed(without_result)]
     pub fn update_policy(ctx: &Context, pid: &str, _name: &str) -> Result<Policy> {
-        print!("{}", "Coming here");
-        thread::sleep(time::Duration::from_secs(3));
+        // println!("{}", "Coming here");
+        // thread::sleep(time::Duration::from_secs(3));
         let p = Policy::get_by_id(pid)?;
         observe_field(ctx, "qid", 4839);
+        observe_result_i32(ctx, 5676);
         Ok(p)
     }
 
-    #[observed]
+    #[observed(without_result)]
     pub fn update_policy1(ctx: &Context, pid: &str, _name: &str) -> Result<Policy> {
-        thread::sleep(time::Duration::from_secs(3));
+        // thread::sleep(time::Duration::from_secs(3));
         let p = Policy::get_by_id(pid)?;
         observe_field(ctx, "qid", 4839);
+        observe_result_i32(ctx, 1234);
         Ok(p)
     }
 
-    #[observed]
+    #[observed(without_result)]
     pub fn update_policy2(ctx: &Context, pid: &str, _name: &str) -> Result<Policy> {
         let p = Policy::get_by_id(pid)?;
         observe_field(ctx, "qid", 4839);
         Ok(p)
+    }
+
+    #[observed(without_result)]
+    pub fn temp(ctx: &Context){
+        observe_result_i32(ctx, 1234);
     }
 
     /*

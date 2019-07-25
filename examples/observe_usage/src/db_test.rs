@@ -22,6 +22,6 @@ pub fn db_call() {
         .load::<Skill>(&nr_conn)
         .expect("Error loading skills");
 
-    println!("Result {:?}", _nr_result);
+    // println!("Result {:?}", _nr_result);
 }
 
