@@ -1,7 +1,7 @@
 use crate::{frame::Frame, queue::Queue, utils, Result};
 use ackorelic::newrelic_fn::{nr_end_transaction, nr_start_web_transaction};
 use serde_derive::{Deserialize, Serialize};
-use std::{cell::RefCell, cell::RefMut, env, io::Write};
+use std::{cell::RefCell, env, io::Write};
 
 pub static mut DIR_EXISTS: bool = false;
 pub static mut CON_DIR_EXISTS: bool = false;
@@ -57,8 +57,8 @@ pub fn is_ctx_dir_exists() -> bool {
 pub struct Context {
     id: String,
     key: String,
+    pub frame_stack: RefCell<Vec<Frame>>,
     pub queue: Box<dyn Queue>,
-    pub frame: RefCell<Frame>,
 }
 
 impl Context {
@@ -67,45 +67,43 @@ impl Context {
         nr_start_web_transaction(&id);
         Context {
             id,
-            frame: RefCell::new(Frame::new("main".to_string())),
             key: uuid::Uuid::new_v4().to_string(),
+            frame_stack: RefCell::new(vec![Frame::new("main")]),
             queue,
         }
     }
 
-    pub fn start_frame(&self) {
-        self.frame.borrow_mut().start();
+    pub fn start_frame(&self, id: &str) {
+        self.frame_stack.borrow_mut().push(Frame::new(id));
     }
 
-    pub fn end_frame(
-        &self,
-        frame: Frame,
-        result: serde_json::Value,
-        success: bool,
-        is_critical: bool,
-        queue: &Box<dyn Queue>,
-    ) {
-        self.mut_frame()
-            .end()
-            .set_success(success)
-            .set_result(result);
-        let ctx_current_frame = self.replace_frame(frame);
-        ctx_current_frame.save(is_critical, &queue);
-        self.frame.borrow_mut().add_sub_frame(ctx_current_frame);
+    pub fn end_frame(&self, is_critical: bool, err: Option<String>) {
+        let child = self.frame_stack.borrow_mut().pop();
+        let parent = self.frame_stack.borrow_mut().pop();
+        if let Some(mut child_frame) = child {
+            child_frame.set_success(err.is_none()).set_err(err).end();
+            child_frame.save(is_critical, &self.queue);
+            if let Some(mut parent_frame) = parent {
+                parent_frame.sub_frames.push(child_frame);
+                self.frame_stack.borrow_mut().push(parent_frame);
+            } else {
+                self.frame_stack.borrow_mut().push(child_frame);
+            }
+        }
     }
 
-    pub fn replace_frame(&self, frame: Frame) -> Frame {
-        self.frame.replace(frame)
-    }
-
-    pub fn mut_frame(&self) -> RefMut<Frame> {
-        self.frame.borrow_mut()
+    fn end_ctx_frame(&self) {
+        let frame = self.frame_stack.borrow_mut().pop();
+        if let Some(mut frame) = frame {
+            frame.end();
+            self.frame_stack.borrow_mut().push(frame);
+        }
     }
 
     pub fn finalise(&self) -> Result<()> {
         // TODO: For new_relic purpose, Later need to remove this dependency
         nr_end_transaction();
-
+        self.end_ctx_frame();
         if is_ctx_dir_exists() {
             match utils::create_file(&CONTEXT_DIR, self.key.as_str()) {
                 Ok(mut file) => {
@@ -124,72 +122,4 @@ impl Context {
     pub fn get_key(&self) -> String {
         self.key.clone()
     }
-}
-
-fn observe_it(ctx: &Context, name: &str, value: serde_json::Value) {
-    ctx.frame.borrow_mut().add_breadcrumbs(name, json!(value));
-}
-
-pub fn observe_string(ctx: &Context, name: &str, value: String) {
-    observe_it(ctx, name, json!(value));
-}
-
-pub fn observe_bool(ctx: &Context, name: &str, value: bool) {
-    observe_it(ctx, name, json!(value))
-}
-
-pub fn observe_char(ctx: &Context, name: &str, value: char) {
-    observe_it(ctx, name, json!(value))
-}
-
-pub fn observe_i8(ctx: &Context, name: &str, value: i8) {
-    observe_it(ctx, name, json!(value))
-}
-
-pub fn observe_i16(ctx: &Context, name: &str, value: i16) {
-    observe_it(ctx, name, json!(value))
-}
-
-pub fn observe_i32(ctx: &Context, name: &str, value: i32) {
-    observe_it(ctx, name, json!(value));
-}
-
-pub fn observe_i64(ctx: &Context, name: &str, value: i64) {
-    observe_it(ctx, name, json!(value))
-}
-
-pub fn observe_isize(ctx: &Context, name: &str, value: isize) {
-    observe_it(ctx, name, json!(value))
-}
-
-pub fn observe_u8(ctx: &Context, name: &str, value: u8) {
-    observe_it(ctx, name, json!(value))
-}
-
-pub fn observe_u16(ctx: &Context, name: &str, value: u16) {
-    observe_it(ctx, name, json!(value))
-}
-
-pub fn observe_u32(ctx: &Context, name: &str, value: u32) {
-    observe_it(ctx, name, json!(value));
-}
-
-pub fn observe_u64(ctx: &Context, name: &str, value: u64) {
-    observe_it(ctx, name, json!(value))
-}
-
-pub fn observe_usize(ctx: &Context, name: &str, value: usize) {
-    observe_it(ctx, name, json!(value))
-}
-
-pub fn observe_f64(ctx: &Context, name: &str, value: f64) {
-    observe_it(ctx, name, json!(value));
-}
-
-pub fn observe_f32(ctx: &Context, name: &str, value: f32) {
-    observe_it(ctx, name, json!(value));
-}
-
-pub fn observe_field(_ctx: &Context, _name: &str, _value: &str) {
-    unimplemented!()
 }

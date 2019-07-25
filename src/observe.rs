@@ -1,27 +1,33 @@
-use crate::{context::Context, frame::Frame, resulty::Resulty, Result};
+use crate::{context::Context, Result};
 
-pub fn observe<F, T>(ctx: &Context, table_name: &str, is_critical: bool, run: F) -> Result<T>
+pub fn observe_with_result<F, T>(
+    ctx: &Context,
+    table_name: &str,
+    is_critical: bool,
+    run: F,
+) -> Result<T>
 where
-    F: FnOnce() -> std::result::Result<T, failure::Error>,
-    T: std::fmt::Debug + serde::Serialize + Resulty,
+    F: FnOnce() -> Result<T>,
 {
-    let temp_frame = ctx.replace_frame(Frame::new(table_name.to_string()));
-    let result = match run() {
-        Ok(response) => {
-            ctx.end_frame(temp_frame, json!(response), true, is_critical, &ctx.queue);
-            Ok(response)
+    ctx.start_frame(table_name);
+    match run() {
+        Ok(r) => {
+            ctx.end_frame(is_critical, None);
+            Ok(r)
         }
-        Err(err) => {
-            ctx.end_frame(
-                temp_frame,
-                json!(format!("{:?}", err)),
-                false,
-                is_critical,
-                &ctx.queue,
-            );
-            Err(err)
+        Err(e) => {
+            ctx.end_frame(is_critical, Some(e.to_string()));
+            Err(e)
         }
-    };
-    ctx.mut_frame().end();
+    }
+}
+
+pub fn observe_all<F, T>(ctx: &Context, table_name: &str, is_critical: bool, run: F) -> T
+where
+    F: FnOnce() -> T,
+{
+    ctx.start_frame(table_name);
+    let result = run();
+    ctx.end_frame(is_critical, None);
     result
 }
