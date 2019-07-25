@@ -11,7 +11,6 @@ extern crate serde_json;
 
 use proc_macro::TokenStream;
 use proc_macro2::Span;
-use serde;
 use std::collections::HashMap;
 use std::str::FromStr;
 use std::string::ToString;
