@@ -102,8 +102,8 @@ impl Context {
 
     pub fn finalise(&self) -> Result<()> {
         // TODO: For new_relic purpose, Later need to remove this dependency
-        nr_end_transaction();
         self.end_ctx_frame();
+        nr_end_transaction();
         if is_ctx_dir_exists() {
             match utils::create_file(&CONTEXT_DIR, self.key.as_str()) {
                 Ok(mut file) => {
