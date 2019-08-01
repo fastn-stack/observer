@@ -53,7 +53,7 @@ pub fn observed(metadata: TokenStream, input: TokenStream) -> TokenStream {
     if meta.as_str() == "with_result" {
         (quote! {
         #visibility fn #ident(#inputs) #output {
-            observe_with_result(ctx, #table_name, #is_critical, || {
+            observe_with_result(#table_name, #is_critical, || {
                 #block
             })
         }
@@ -62,7 +62,7 @@ pub fn observed(metadata: TokenStream, input: TokenStream) -> TokenStream {
     } else {
         (quote! {
         #visibility fn #ident(#inputs) #output {
-            observe_all(ctx, #table_name, #is_critical, || {
+            observe_all(#table_name, #is_critical, || {
                 #block
             })
         }
@@ -93,7 +93,7 @@ fn rewrite_func_block(mut block: Box<syn::Block>, table_name: &str) -> Box<syn::
                         syn::Expr::Path(p) => {
                             let mut path = p.clone();
                             if p.path.segments[0].ident.to_string().eq("observe_field") {
-                                if let syn::Expr::Lit(l) = args[1].clone() {
+                                if let syn::Expr::Lit(l) = args[0].clone() {
                                     if let syn::Lit::Str(s) = l.lit.clone() {
                                         let func = "observe_".to_string()
                                             + &get_func(s.value(), table_name);
