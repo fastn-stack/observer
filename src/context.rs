@@ -78,7 +78,6 @@ pub fn create_context(id: String, queue: Box<Queue>) {
 pub fn end_context() {
     CONTEXT.with(|obj| {
         if let Some(ref ctx) = obj.borrow().as_ref() {
-            println!("Finalising Object");
             let _ = ctx.finalise();
         }
     });
@@ -87,7 +86,6 @@ pub fn end_context() {
 pub fn start_frame(id: &str) {
     CONTEXT.with(|obj| {
         if let Some(ref ctx) = obj.borrow().as_ref() {
-            println!("Start Frame:: {}", id);
             let _ = ctx.start_frame(id);
         }
     });
@@ -96,7 +94,6 @@ pub fn start_frame(id: &str) {
 pub fn end_frame(is_critical: bool, err: Option<String>) {
     CONTEXT.with(|obj| {
         if let Some(ref ctx) = obj.borrow().as_ref() {
-            println!("End Frame");
             let _ = ctx.end_frame(is_critical, err);
         }
     });
@@ -105,20 +102,39 @@ pub fn end_frame(is_critical: bool, err: Option<String>) {
 pub fn end_ctx_frame() {
     CONTEXT.with(|obj| {
         if let Some(ref ctx) = obj.borrow().as_ref() {
-            println!("End ctx Frame");
             let _ = ctx.end_ctx_frame();
         }
     });
 }
 
-// observe_result is remaining
-// observe_ is remaining
+pub(crate) fn observe_field(name: &str, value: serde_json::Value) {
+    CONTEXT.with(|obj| {
+        if let Some(ref ctx) = obj.borrow().as_ref() {
+            let frame = ctx.frame_stack.borrow_mut().pop();
+            if let Some(mut frame) = frame {
+                frame.add_breadcrumbs(name, json!(value));
+                ctx.frame_stack.borrow_mut().push(frame);
+            }
+        }
+    });
+}
+
+pub fn observe_result(result: serde_json::Value) {
+    CONTEXT.with(|obj| {
+        if let Some(ref ctx) = obj.borrow().as_ref() {
+            let frame = ctx.frame_stack.borrow_mut().pop();
+            if let Some(mut frame) = frame {
+                frame.set_result(result);
+                ctx.frame_stack.borrow_mut().push(frame);
+            }
+        }
+    });
+}
 
 impl Context {
     pub fn new(id: String, queue: Box<Queue>) -> Context {
         // TODO: For new_relic purpose, Later need to remove this dependency
         nr_start_web_transaction(&id);
-        println!("Create New Object :: {}", id);
         Context {
             id,
             key: uuid::Uuid::new_v4().to_string(),
