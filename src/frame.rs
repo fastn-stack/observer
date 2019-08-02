@@ -8,7 +8,7 @@ use std::fmt::{self, Debug};
 use std::io::Write;
 
 #[derive(Serialize, Deserialize)]
-pub struct Frame {
+pub struct Span {
     pub id: String,
     key: String,
     pub breadcrumbs: HashMap<String, serde_json::Value>,
@@ -17,18 +17,18 @@ pub struct Frame {
     pub err: Option<String>,
     pub start_time: DateTime<Utc>,
     pub end_time: Option<DateTime<Utc>>,
-    pub sub_frames: Vec<Frame>,
+    pub sub_frames: Vec<Span>,
     #[serde(skip)]
     segment: Option<Segment>,
 }
 
-impl Clone for Frame {
+impl Clone for Span {
     fn clone(&self) -> Self {
-        Frame::new(&self.id)
+        Span::new(&self.id)
     }
 }
 
-impl Debug for Frame {
+impl Debug for Span {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.debug_struct("Frame")
             .field("id", &self.id)
@@ -44,9 +44,9 @@ impl Debug for Frame {
     }
 }
 
-impl Frame {
-    pub fn new(id: &str) -> Frame {
-        Frame {
+impl Span {
+    pub fn new(id: &str) -> Span {
+        Span {
             segment: Some(nr_start_custom_segment(&id)),
             id: id.to_owned(),
             key: uuid::Uuid::new_v4().to_string(),
@@ -89,7 +89,7 @@ impl Frame {
         self
     }
 
-    pub fn add_sub_frame(&mut self, frame: Frame) {
+    pub fn add_sub_frame(&mut self, frame: Span) {
         self.sub_frames.push(frame);
     }
 

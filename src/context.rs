@@ -1,4 +1,4 @@
-use crate::{frame::Frame, queue::Queue, utils, Result};
+use crate::{frame::Span, queue::Queue, utils, Result};
 use ackorelic::newrelic_fn::{nr_end_transaction, nr_start_web_transaction};
 use serde_derive::{Deserialize, Serialize};
 use std::{cell::RefCell, env, io::Write};
@@ -57,7 +57,7 @@ pub fn is_ctx_dir_exists() -> bool {
 pub struct Context {
     id: String,
     key: String,
-    pub frame_stack: RefCell<Vec<Frame>>,
+    pub span_stack: RefCell<Vec<Span>>,
     pub queue: Box<dyn Queue>,
 }
 
@@ -110,10 +110,10 @@ pub fn end_ctx_frame() {
 pub(crate) fn observe_field(name: &str, value: serde_json::Value) {
     CONTEXT.with(|obj| {
         if let Some(ref ctx) = obj.borrow().as_ref() {
-            let frame = ctx.frame_stack.borrow_mut().pop();
+            let frame = ctx.span_stack.borrow_mut().pop();
             if let Some(mut frame) = frame {
                 frame.add_breadcrumbs(name, json!(value));
-                ctx.frame_stack.borrow_mut().push(frame);
+                ctx.span_stack.borrow_mut().push(frame);
             }
         }
     });
@@ -122,10 +122,10 @@ pub(crate) fn observe_field(name: &str, value: serde_json::Value) {
 pub fn observe_result(result: serde_json::Value) {
     CONTEXT.with(|obj| {
         if let Some(ref ctx) = obj.borrow().as_ref() {
-            let frame = ctx.frame_stack.borrow_mut().pop();
+            let frame = ctx.span_stack.borrow_mut().pop();
             if let Some(mut frame) = frame {
                 frame.set_result(result);
-                ctx.frame_stack.borrow_mut().push(frame);
+                ctx.span_stack.borrow_mut().push(frame);
             }
         }
     });
@@ -138,35 +138,35 @@ impl Context {
         Context {
             id,
             key: uuid::Uuid::new_v4().to_string(),
-            frame_stack: RefCell::new(vec![Frame::new("main")]),
+            span_stack: RefCell::new(vec![Span::new("main")]),
             queue,
         }
     }
 
     pub fn start_frame(&self, id: &str) {
-        self.frame_stack.borrow_mut().push(Frame::new(id));
+        self.span_stack.borrow_mut().push(Span::new(id));
     }
 
     pub fn end_frame(&self, is_critical: bool, err: Option<String>) {
-        let child = self.frame_stack.borrow_mut().pop();
-        let parent = self.frame_stack.borrow_mut().pop();
+        let child = self.span_stack.borrow_mut().pop();
+        let parent = self.span_stack.borrow_mut().pop();
         if let Some(mut child_frame) = child {
             child_frame.set_success(err.is_none()).set_err(err).end();
             child_frame.save(is_critical, &self.queue);
             if let Some(mut parent_frame) = parent {
                 parent_frame.sub_frames.push(child_frame);
-                self.frame_stack.borrow_mut().push(parent_frame);
+                self.span_stack.borrow_mut().push(parent_frame);
             } else {
-                self.frame_stack.borrow_mut().push(child_frame);
+                self.span_stack.borrow_mut().push(child_frame);
             }
         }
     }
 
     fn end_ctx_frame(&self) {
-        let frame = self.frame_stack.borrow_mut().pop();
+        let frame = self.span_stack.borrow_mut().pop();
         if let Some(mut frame) = frame {
             frame.end();
-            self.frame_stack.borrow_mut().push(frame);
+            self.span_stack.borrow_mut().push(frame);
         }
     }
 
