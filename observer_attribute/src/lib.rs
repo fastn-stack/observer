@@ -36,6 +36,7 @@ lazy_static! {
     };
 }
 
+// TODO: Need to change and implement Parser for custom struct
 fn meta_parse(attr_args: Vec<NestedMeta>) -> (Option<String>, Option<String>) {
     let error_message = r#"panic!("observer parser error:: attribute error, It should be like `#[observed(with_result, namespace="namespace_value")]`)"#;
     if attr_args.len() == 0 {
