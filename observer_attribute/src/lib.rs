@@ -1,5 +1,6 @@
 extern crate proc_macro;
 extern crate proc_macro2;
+#[macro_use]
 extern crate syn;
 #[macro_use]
 extern crate quote;
@@ -15,7 +16,7 @@ use std::collections::HashMap;
 use std::str::FromStr;
 use std::string::ToString;
 use std::{env, fs::File};
-use syn::Item;
+use syn::{AttributeArgs, Item, Lit, Meta, NestedMeta};
 
 #[derive(Debug, Deserialize, Clone)]
 struct Event {
@@ -35,22 +36,63 @@ lazy_static! {
     };
 }
 
+fn meta_parse(attr_args: Vec<NestedMeta>) -> (Option<String>, Option<String>) {
+    let error_message = r#"panic!("observer parser error:: attribute error, It should be like `#[observed(with_result, namespace="namespace_value")]`)"#;
+    if attr_args.len() == 0 {
+        return (None, None);
+    }
+
+    if attr_args.len() > 2 {
+        panic!(error_message)
+    }
+    let mut fn_return_type = None;
+    let mut namespace = None;
+
+    for attr in attr_args {
+        match attr {
+            NestedMeta::Meta(meta) => match meta {
+                Meta::Word(ident) => fn_return_type = Some(ident.to_string()),
+                Meta::NameValue(name_value) => {
+                    let namespace_key = name_value.ident.to_string();
+                    if namespace_key.as_str() != "namespace" {
+                        panic!("Key Error observer parser:: key name should be namespace")
+                    }
+                    match name_value.lit {
+                        Lit::Str(lit_str) => {
+                            namespace = Some(lit_str.value());
+                        }
+                        _ => panic!(error_message),
+                    }
+                }
+                _ => panic!(error_message),
+            },
+            _ => panic!(error_message),
+        }
+    }
+    (fn_return_type, namespace)
+}
+
 #[proc_macro_attribute]
 pub fn observed(metadata: TokenStream, input: TokenStream) -> TokenStream {
-    let parse_meta: syn::Meta = syn::parse(metadata).expect("Failed to parse metadata");
-    let meta = parse_meta.name().to_string();
+    let (return_type, name_space) = meta_parse(parse_macro_input!(metadata as AttributeArgs));
+
     let item: syn::Item = syn::parse(input).expect("failed to parse input");
     let function = get_fn(item);
-
     let visibility = function.vis;
     let ident = function.ident;
     let inputs = function.decl.inputs;
     let output = function.decl.output;
     let block = function.block;
-    let table_name = ident.to_string();
+    let table_name = if let Some(name_space) = name_space {
+        name_space + "__" + &ident.to_string()
+    } else {
+        ident.to_string()
+    };
     let block = rewrite_func_block(block, &table_name);
     let is_critical = get_event(&table_name).critical;
-    if meta.as_str() == "with_result" {
+    if return_type.is_none()
+        || return_type.is_some() && return_type.unwrap().as_str() == "with_result"
+    {
         (quote! {
         #visibility fn #ident(#inputs) #output {
             observe_with_result(#table_name, #is_critical, || {

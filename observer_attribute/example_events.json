@@ -1,5 +1,5 @@
 {
-  "create_policy" : {
+  "foo__create_policy" : {
     "critical" : true,
     "result_type": "list",
     "fields" : {
@@ -14,7 +14,7 @@
       "premium" : "String"
     }
   },
-  "update_policy1" : {
+  "namespace__update_policy1" : {
     "critical" : false,
     "result_type": "i32",
     "fields" : {
