@@ -1,13 +1,14 @@
-use crate::{context::*, Result};
+use crate::context::*;
 
-pub fn observe_with_result<F, T>(
+pub fn observe_with_result<F, T, E>(
     // ctx: &Context,
     table_name: &str,
     is_critical: bool,
     run: F,
-) -> Result<T>
+) -> Result<T, E>
 where
-    F: FnOnce() -> Result<T>,
+    F: FnOnce() -> Result<T, E>,
+    E: std::fmt::Debug,
 {
     start_frame(table_name);
     match run() {
@@ -16,7 +17,7 @@ where
             Ok(r)
         }
         Err(e) => {
-            end_frame(is_critical, Some(e.to_string()));
+            end_frame(is_critical, Some(format!("{:?}", e)));
             Err(e)
         }
     }

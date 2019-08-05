@@ -174,17 +174,21 @@ impl Context {
         // TODO: For new_relic purpose, Later need to remove this dependency
         self.end_ctx_frame();
         nr_end_transaction();
-        if is_ctx_dir_exists() {
-            match utils::create_file(&CONTEXT_DIR, self.key.as_str()) {
-                Ok(mut file) => {
-                    if let Err(err) = file.write(json!(self).to_string().as_bytes()) {
-                        println!("Context file write error :: {:#?}", err);
-                    };
-                }
-                Err(err) => {
-                    println!("Context file create error {:#?}", err);
-                }
-            };
+        if true {
+            self.queue.enqueue(json!({ "Context": self }))
+        } else {
+            if is_ctx_dir_exists() {
+                match utils::create_file(&CONTEXT_DIR, self.key.as_str()) {
+                    Ok(mut file) => {
+                        if let Err(err) = file.write(json!(self).to_string().as_bytes()) {
+                            println!("Context file write error :: {:#?}", err);
+                        };
+                    }
+                    Err(err) => {
+                        println!("Context file create error {:#?}", err);
+                    }
+                };
+            }
         }
         Ok(())
     }
