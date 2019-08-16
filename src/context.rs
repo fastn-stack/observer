@@ -79,6 +79,8 @@ pub fn end_context() {
     CONTEXT.with(|obj| {
         if let Some(ref ctx) = obj.borrow().as_ref() {
             let _ = ctx.finalise();
+            let mut context = obj.borrow_mut();
+            context.take();
         }
     });
 }
