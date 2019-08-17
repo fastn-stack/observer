@@ -81,7 +81,7 @@ pub fn end_context() {
             let _ = ctx.finalise();
         }
         let mut context = obj.borrow_mut();
-            context.take();
+        context.take();
     });
 }
 
