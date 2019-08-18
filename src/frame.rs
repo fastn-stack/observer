@@ -8,61 +8,52 @@ use std::fmt::{self, Debug};
 use std::io::Write;
 
 #[derive(Serialize, Deserialize)]
-pub struct Frame {
-    id: String,
+pub struct Span {
+    pub id: String,
     key: String,
     pub breadcrumbs: HashMap<String, serde_json::Value>,
     pub success: Option<bool>,
     pub result: Option<serde_json::Value>,
+    pub err: Option<String>,
     pub start_time: DateTime<Utc>,
     pub end_time: Option<DateTime<Utc>>,
-    pub sub_frames: Vec<Frame>,
+    pub sub_frames: Vec<Span>,
     #[serde(skip)]
     segment: Option<Segment>,
 }
 
-impl Clone for Frame {
+impl Clone for Span {
     fn clone(&self) -> Self {
-        Frame::new(self.id.clone())
+        Span::new(&self.id)
     }
 }
 
-impl Debug for Frame {
+impl Debug for Span {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(
-            f,
-            "Frame {{
-    id: {},
-    key: {},
-    breadcrumbs: {:?},
-    success: {:?},
-    result: {:?},
-    start_time: {:?},
-    end_time: {:?},
-    sub_frames: {:?}
-}}
-",
-            self.id,
-            self.key,
-            self.breadcrumbs,
-            self.success,
-            self.result,
-            self.start_time,
-            self.end_time,
-            self.sub_frames,
-        )
+        f.debug_struct("Frame")
+            .field("id", &self.id)
+            .field("key", &self.key)
+            .field("breadcrumbs", &self.breadcrumbs)
+            .field("success", &self.success)
+            .field("result", &self.result)
+            .field("err", &self.err)
+            .field("start_time", &self.start_time)
+            .field("end_time", &self.end_time)
+            .field("sub_frames", &self.sub_frames)
+            .finish()
     }
 }
 
-impl Frame {
-    pub fn new(id: String) -> Frame {
-        Frame {
+impl Span {
+    pub fn new(id: &str) -> Span {
+        Span {
             segment: Some(nr_start_custom_segment(&id)),
-            id,
+            id: id.to_owned(),
             key: uuid::Uuid::new_v4().to_string(),
             breadcrumbs: HashMap::new(),
             success: None,
             result: None,
+            err: None,
             start_time: Utc::now(),
             end_time: None,
             sub_frames: vec![],
@@ -93,7 +84,12 @@ impl Frame {
         self
     }
 
-    pub fn add_sub_frame(&mut self, frame: Frame) {
+    pub fn set_err(&mut self, err: Option<String>) -> &mut Self {
+        self.err = err;
+        self
+    }
+
+    pub fn add_sub_frame(&mut self, frame: Span) {
         self.sub_frames.push(frame);
     }
 

@@ -1,6 +1,6 @@
 [package]
 name = "observer"
-version = "0.1.3"
+version = "0.1.10"
 authors = ["AbrarNitk <abrar.nitk@gmail.com>"]
 edition = "2018"
 description = "Observer"
@@ -18,7 +18,8 @@ failure = "~0.1.1"
 uuid = { version = "0.7", features = ["serde", "v4"] }
 lazy_static = "~1.2.0"
 typetag = "0.1"
-observer_attribute = "0.1.1"
+observer_attribute = "0.1.4"
+#observer_attribute = {path = "./observer_attribute/"}
 ackorelic = "0.1.5"
 # ackorelic = {git = "https://github.com/ackotech/ackorelic", branch="query_parse"}
 

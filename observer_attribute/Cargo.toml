@@ -1,6 +1,6 @@
 [package]
 name = "observer_attribute"
-version = "0.1.1"
+version = "0.1.4"
 authors = ["AbrarNitk <abrar.nitk@gmail.com>"]
 edition = "2018"
 description = "Observer Attributes"
@@ -22,5 +22,5 @@ serde_derive = "~1.0.27"
 serde_json = "~1.0.9"
 
 [dependencies.syn]
-version = "0.15.34"
+version = "0.15.42"
 features = ["full"]

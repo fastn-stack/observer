@@ -1,29 +1,41 @@
 {
-  "create_policy" : {
+  "foo__create_policy" : {
     "critical" : true,
+    "result_type": "list",
     "fields" : {
-      "pid" : "String"
+      "pid" : "string"
     }
   },
   "update_policy" : {
     "critical" : false,
+    "result_type": "i32",
     "fields" : {
-      "qid" : "int",
+      "qid" : "i32",
       "premium" : "String"
     }
   },
-  "update_policy1" : {
+  "namespace__update_policy1" : {
     "critical" : false,
+    "result_type": "i32",
     "fields" : {
-      "qid" : "int",
+      "qid" : "i32",
       "premium" : "String"
     }
   },
   "update_policy2" : {
     "critical" : false,
+    "result_type": "i32",
     "fields" : {
-      "qid" : "int",
+      "qid" : "i32",
       "premium" : "String"
+    }
+  },
+  "temp" : {
+    "critical" : false,
+    "result_type": "i32",
+    "fields" : {
+      "qid" : "i32",
+      "premium" : "string"
     }
   }
 }

@@ -11,13 +11,12 @@ pub mod context;
 mod event;
 mod frame;
 pub mod observe;
+pub mod observe_fields;
+pub mod prelude;
 pub mod queue;
-pub mod resulty;
 mod utils;
-
 pub use crate::context::Context;
 pub use crate::event::{Event, OEvent, OID};
-pub use crate::observe::observe;
 use std::env;
 pub type Result<T> = std::result::Result<T, failure::Error>;
 
