@@ -1,6 +1,6 @@
 [package]
 name = "observer"
-version = "0.1.10"
+version = "0.1.11"
 authors = ["AbrarNitk <abrar.nitk@gmail.com>"]
 edition = "2018"
 description = "Observer"
@@ -10,12 +10,12 @@ readme = "README.md"
 keywords = ["observer", "logging", "events_logging", "function_logging"]
 repository = "https://github.com/ackotech/observer"
 
-[workspace]
-members = [
-    "examples/attribute_test",
-    "examples/observe_usage",
-    "observer_attribute"
-]
+#[workspace]
+#members = [
+#    "examples/attribute_test",
+#    "examples/observe_usage",
+#    "observer_attribute"
+#]
 
 [dependencies]
 serde = "~1.0.27"
@@ -27,7 +27,7 @@ lazy_static = "~1.3.0"
 typetag = "0.1"
 observer_attribute = "0.1.4"
 #observer_attribute = {path = "./observer_attribute/"}
-ackorelic = "0.1.5"
+ackorelic = "~0.1.7"
 # ackorelic = {git = "https://github.com/ackotech/ackorelic", branch="query_parse"}
 
 [dependencies.chrono]
