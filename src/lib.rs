@@ -30,7 +30,7 @@ pub fn check_path() -> String {
 }
 
 #[cfg(test)]
-pub mod tests {
+pub mod test_newrelic {
     use ackorelic::{
         newrelic_fn::{
             nr_end_custom_segment, nr_end_transaction, nr_start_custom_segment,

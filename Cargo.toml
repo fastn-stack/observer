@@ -27,7 +27,8 @@ lazy_static = "~1.3.0"
 typetag = "0.1"
 observer_attribute = "0.1.4"
 #observer_attribute = {path = "./observer_attribute/"}
-ackorelic = "~0.1.7"
+ackorelic = "~0.1.8"
+threadpool = "1.7.1"
 # ackorelic = {git = "https://github.com/ackotech/ackorelic", branch="query_parse"}
 
 [dependencies.chrono]
