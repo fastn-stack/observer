@@ -22,14 +22,18 @@ fn create_segment() {
 
 #[test]
 fn load_test_create_context() {
+    let pool = threadpool::ThreadPool::new(5);
     for _ in 0..10 {
-        context::create_context(
-            "test_context".to_string(),
-            Box::new(queue::DemoQueue {
-                name: "api_testing".to_string(),
-            }),
-        );
-        create_segment();
-        context::end_context();
+        pool.execute(move || {
+            context::create_context(
+                "test_context".to_string(),
+                Box::new(queue::DemoQueue {
+                    name: "api_testing".to_string(),
+                }),
+            );
+            create_segment();
+            context::end_context();
+        });
+        thread::sleep(Duration::from_millis(500));
     }
 }
