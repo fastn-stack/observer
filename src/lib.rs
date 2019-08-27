@@ -18,6 +18,8 @@ mod utils;
 pub use crate::context::Context;
 pub use crate::event::{Event, OEvent, OID};
 use std::env;
+#[cfg(test)]
+mod tests;
 pub type Result<T> = std::result::Result<T, failure::Error>;
 
 lazy_static! {
