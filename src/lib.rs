@@ -10,11 +10,11 @@ extern crate observer_attribute;
 pub mod context;
 mod event;
 mod frame;
-#[cfg(mysql)]
+#[cfg(feature = "mysql")]
 pub mod mysql;
 pub mod observe;
 pub mod observe_fields;
-#[cfg(postgres)]
+#[cfg(feature = "postgres")]
 pub mod pg;
 pub mod prelude;
 pub mod queue;
