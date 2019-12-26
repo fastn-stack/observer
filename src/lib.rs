@@ -12,6 +12,8 @@ mod event;
 mod frame;
 pub mod observe;
 pub mod observe_fields;
+#[cfg(postgres)]
+pub mod pg;
 pub mod prelude;
 pub mod queue;
 mod utils;

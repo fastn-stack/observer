@@ -26,10 +26,14 @@ uuid = { version = "0.7", features = ["serde", "v4"] }
 lazy_static = "~1.3.0"
 typetag = "0.1"
 observer_attribute = "0.1.4"
-#observer_attribute = {path = "./observer_attribute/"}
 ackorelic = "~0.1.9"
 threadpool = "1.7.1"
+diesel = { version = "1.4.3", features = ["postgres", "r2d2", "chrono", "sqlite", "mysql"] }
+r2d2-diesel = "1.0.0"
+antidote = "1.0.0"
+r2d2 = "0.8"
 # ackorelic = {git = "https://github.com/ackotech/ackorelic", branch="query_parse"}
+# observer_attribute = {path = "./observer_attribute/"}
 
 [dependencies.chrono]
 version = "0.4"
@@ -42,3 +46,8 @@ features = ["serde"]
 #[dependencies.observer_queue]
 #path = "./observer_queue"
 #version = "0.1.0"
+
+[features]
+postgres = []
+mysql = []
+sqlite = []
