@@ -1,8 +1,14 @@
-pub struct ObserverNewRelic;
+use failure::_core::cell::RefCell;
+
+pub struct ObserverNewRelic {
+    segment_stack: RefCell<Vec<ackorelic::acko_segment::Segment>>,
+}
 
 impl ObserverNewRelic {
     fn new() -> Self {
-        ObserverNewRelic
+        ObserverNewRelic {
+            segment_stack: RefCell::new(vec![]),
+        }
     }
 }
 /// Implementation of Backend trait for NewRelic
