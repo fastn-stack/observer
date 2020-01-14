@@ -31,7 +31,7 @@ pub trait Backend {
     fn app_ended(&self);
     fn context_created(&self, id: &str);
     fn context_ended(&self);
-    fn span_created(&self);
+    fn span_created(&self, id: &str);
     fn span_log(&self);
     fn span_ended(&self);
 }
