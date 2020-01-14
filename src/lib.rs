@@ -26,6 +26,71 @@ use std::env;
 mod tests;
 pub type Result<T> = std::result::Result<T, failure::Error>;
 
+pub trait Backend {
+    fn app_started(&self);
+    fn app_ended(&self);
+    fn context_created(&self);
+    fn context_ended(&self);
+    fn span_created(&self);
+    fn span_log(&self);
+    fn span_ended(&self);
+}
+
+pub struct Observer {
+    backends: Vec<Box<dyn Backend>>,
+}
+
+impl Observer {
+    /// Initialized Observer with different backends(NewRelic, StatsD, Sentry, Jaeger, etc...)
+    /// and call their app started method
+    pub fn new(backends: Vec<Box<dyn Backend>>) -> Self {
+        for backend in backends.iter() {
+            backend.app_started()
+        }
+        Observer { backends }
+    }
+    /// It will iterate through all backends and call their context_created method.
+    pub fn create_context(&self, _context_id: &str) {
+        // create context by calling context::create_context(context_id)
+        for backend in self.backends.iter() {
+            backend.context_created();
+        }
+    }
+
+    /// It will end context object and drop things if needed.
+    pub fn end_context(&self) {}
+}
+
+pub struct ObserverNewRelic;
+
+impl ObserverNewRelic {
+    fn new() -> Self {
+        ObserverNewRelic
+    }
+}
+/// Implementation of Backend trait for NewRelic
+
+impl Backend for ObserverNewRelic {
+    /// This will start NewRelic app
+    fn app_started(&self) {}
+    /// This will end NewRelic app
+    fn app_ended(&self) {}
+    /// This method will be called when context has been created.
+    fn context_created(&self) {}
+    /// This method will be called when context ended.
+    fn context_ended(&self) {}
+    /// This method will be when span created.
+    fn span_created(&self) {}
+    /// This method will be when span needs to logged.
+    fn span_log(&self) {}
+    /// This method will be when span ended.
+    fn span_ended(&self) {}
+}
+
+fn _test() {
+    let _t: Box<dyn Backend> = Box::new(ObserverNewRelic::new());
+}
+
 lazy_static! {
     static ref LOG_DIR: String =
         env::var("OBSERVER_LOGS").unwrap_or_else(|_| "/var/log/".to_string());
