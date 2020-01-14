@@ -1,7 +1,5 @@
 use crate::context::{is_log_dir_exists, LOG_DIR};
 use crate::utils;
-use ackorelic::acko_segment::Segment;
-use ackorelic::newrelic_fn::{nr_end_custom_segment, nr_start_custom_segment};
 use chrono::prelude::*;
 use std::collections::HashMap;
 use std::fmt::{self, Debug};
@@ -18,8 +16,6 @@ pub struct Span {
     pub start_time: DateTime<Utc>,
     pub end_time: Option<DateTime<Utc>>,
     pub sub_frames: Vec<Span>,
-    #[serde(skip)]
-    segment: Option<Segment>,
 }
 
 impl Clone for Span {
@@ -47,7 +43,6 @@ impl Debug for Span {
 impl Span {
     pub fn new(id: &str) -> Span {
         Span {
-            segment: Some(nr_start_custom_segment(&id)),
             id: id.to_owned(),
             key: uuid::Uuid::new_v4().to_string(),
             breadcrumbs: HashMap::new(),
@@ -66,10 +61,6 @@ impl Span {
     }
 
     pub fn end(&mut self) -> &mut Self {
-        // TODO: For new_relic purpose, Later need to remove this dependency
-        if let Some(segment) = self.segment.take() {
-            nr_end_custom_segment(segment);
-        }
         self.end_time = Some(Utc::now());
         self
     }

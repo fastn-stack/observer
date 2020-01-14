@@ -1,7 +1,6 @@
 use crate::{frame::Span, utils, Result};
-use ackorelic::newrelic_fn::{nr_end_transaction, nr_start_web_transaction};
 use serde_derive::{Deserialize, Serialize};
-use std::{cell::RefCell, env, io::Write};
+use std::io::Write;
 
 pub static mut DIR_EXISTS: bool = false;
 pub static mut CON_DIR_EXISTS: bool = false;
@@ -10,7 +9,7 @@ lazy_static! {
     pub static ref LOG_DIR: String = {
         let log_dir = format!(
             "{}/{}",
-            env::var("LOG_DIR").unwrap_or_else(|_| "/var/log".to_owned()),
+            std::env::var("LOG_DIR").unwrap_or_else(|_| "/var/log".to_owned()),
             "observer/"
         );
         match utils::create_dir_all_if_not_exists(&log_dir) {
@@ -57,16 +56,16 @@ pub fn is_ctx_dir_exists() -> bool {
 pub struct Context {
     id: String,
     key: String,
-    pub span_stack: RefCell<Vec<Span>>,
+    pub span_stack: std::cell::RefCell<Vec<Span>>,
 }
 
 thread_local! {
-    static CONTEXT: RefCell<Option<Context>> = RefCell::new(None);
+    static CONTEXT: std::cell::RefCell<Option<Context>> = std::cell::RefCell::new(None);
 }
 
 pub fn create_context(id: String) {
     CONTEXT.with(|obj| {
-        RefCell::borrow_mut(obj);
+        std::cell::RefCell::borrow_mut(obj);
         let mut context = obj.borrow_mut();
         if context.is_none() {
             context.replace(Context::new(id));
@@ -134,12 +133,10 @@ pub fn observe_result(result: serde_json::Value) {
 
 impl Context {
     pub fn new(id: String) -> Context {
-        // TODO: For new_relic purpose, Later need to remove this dependency
-        nr_start_web_transaction(&id);
         Context {
             id,
             key: uuid::Uuid::new_v4().to_string(),
-            span_stack: RefCell::new(vec![Span::new("main")]),
+            span_stack: std::cell::RefCell::new(vec![Span::new("main")]),
         }
     }
 
@@ -172,7 +169,6 @@ impl Context {
     pub fn finalise(&self) -> Result<()> {
         // TODO: For new_relic purpose, Later need to remove this dependency
         self.end_ctx_frame();
-        nr_end_transaction();
         if true {
         } else {
             if is_ctx_dir_exists() {
