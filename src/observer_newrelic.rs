@@ -30,7 +30,7 @@ impl crate::Backend for ObserverNewRelic {
     }
     /// This method will be when span created.
     fn span_created(&self, id: &str) {
-        // Need to start a newrelic segment and store it somewhere
+        // Need to start a newrelic segment and store it stack
         self.segment_stack
             .borrow_mut()
             .push(ackorelic::newrelic_fn::nr_start_custom_segment(id))
@@ -39,7 +39,7 @@ impl crate::Backend for ObserverNewRelic {
     fn span_log(&self) {}
     /// This method will be when span ended.
     fn span_ended(&self) {
-        // Needs to end a segment which was stored earlier
+        // Needs to end a segment which was stored earlier in stack
         if let Some(segment) = self.segment_stack.borrow_mut().pop() {
             ackorelic::newrelic_fn::nr_end_custom_segment(segment);
         }
