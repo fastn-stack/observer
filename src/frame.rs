@@ -1,5 +1,5 @@
 use crate::context::{is_log_dir_exists, LOG_DIR};
-use crate::{queue::Queue, utils};
+use crate::utils;
 use ackorelic::acko_segment::Segment;
 use ackorelic::newrelic_fn::{nr_end_custom_segment, nr_start_custom_segment};
 use chrono::prelude::*;
@@ -97,14 +97,6 @@ impl Span {
         self.key.clone()
     }
 
-    pub fn save(&self, critical: bool, queue: &Box<dyn Queue>) {
-        if critical {
-            self.enqueue(queue)
-        } else {
-            self.save_on_local()
-        }
-    }
-
     pub fn save_on_local(&self) {
         if is_log_dir_exists() {
             let path = LOG_DIR.to_owned() + self.id.as_str();
@@ -123,10 +115,6 @@ impl Span {
                 }
             };
         }
-    }
-
-    pub fn enqueue(&self, queue: &Box<dyn Queue>) {
-        queue.enqueue(json!(self))
     }
 
     //adding breadcrumbs

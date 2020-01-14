@@ -17,7 +17,6 @@ pub mod observe_fields;
 #[cfg(feature = "postgres")]
 pub mod pg;
 pub mod prelude;
-pub mod queue;
 mod utils;
 pub use crate::context::Context;
 pub use crate::event::{Event, OEvent, OID};
