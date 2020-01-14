@@ -75,15 +75,24 @@ impl Backend for ObserverNewRelic {
     /// This will end NewRelic app
     fn app_ended(&self) {}
     /// This method will be called when context has been created.
-    fn context_created(&self) {}
+    fn context_created(&self) {
+        // Need to create web transaction of NewRelic
+    }
     /// This method will be called when context ended.
-    fn context_ended(&self) {}
+    fn context_ended(&self) {
+        // Need to end web transaction
+    }
     /// This method will be when span created.
-    fn span_created(&self) {}
+    fn span_created(&self) {
+        // Need to start a segment and store it somewhere
+    }
     /// This method will be when span needs to logged.
-    fn span_log(&self) {}
+    fn span_log(&self) {
+    }
     /// This method will be when span ended.
-    fn span_ended(&self) {}
+    fn span_ended(&self) {
+        // Needs to end a segment which was stored earlier
+    }
 }
 
 fn _test() {
