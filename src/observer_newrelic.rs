@@ -19,12 +19,14 @@ impl crate::Backend for ObserverNewRelic {
     /// This will end NewRelic app
     fn app_ended(&self) {}
     /// This method will be called when context has been created.
-    fn context_created(&self) {
+    fn context_created(&self, id: &str) {
         // Need to create web transaction of NewRelic
+        ackorelic::newrelic_fn::nr_start_web_transaction(id);
     }
     /// This method will be called when context ended.
     fn context_ended(&self) {
         // Need to end web transaction
+        ackorelic::newrelic_fn::nr_end_transaction()
     }
     /// This method will be when span created.
     fn span_created(&self) {

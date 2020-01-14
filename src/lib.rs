@@ -29,7 +29,7 @@ pub type Result<T> = std::result::Result<T, failure::Error>;
 pub trait Backend {
     fn app_started(&self);
     fn app_ended(&self);
-    fn context_created(&self);
+    fn context_created(&self, id: &str);
     fn context_ended(&self);
     fn span_created(&self);
     fn span_log(&self);
@@ -50,10 +50,10 @@ impl Observer {
         Observer { backends }
     }
     /// It will iterate through all backends and call their context_created method.
-    pub fn create_context(&self, _context_id: &str) {
+    pub fn create_context(&self, context_id: &str) {
         // create context by calling context::create_context(context_id)
         for backend in self.backends.iter() {
-            backend.context_created();
+            backend.context_created(context_id);
         }
     }
 
