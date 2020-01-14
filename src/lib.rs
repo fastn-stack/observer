@@ -58,7 +58,11 @@ impl Observer {
     }
 
     /// It will end context object and drop things if needed.
-    pub fn end_context(&self) {}
+    pub fn end_context(&self) {
+        for backend in self.backends.iter() {
+            backend.context_ended();
+        }
+    }
 }
 
 lazy_static! {
