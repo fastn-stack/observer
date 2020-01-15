@@ -32,8 +32,8 @@ pub trait Backend {
     fn context_created(&self, id: &str);
     fn context_ended(&self);
     fn span_created(&self, id: &str);
-    fn span_log(&self);
-    fn span_ended(&self);
+    fn span_data(&self, key: &str, value: &str);
+    fn span_ended(&self, id: &str);
 }
 
 pub struct Observer {
@@ -52,6 +52,7 @@ impl Observer {
     /// It will iterate through all backends and call their context_created method.
     pub fn create_context(&self, context_id: &str) {
         // create context by calling context::create_context(context_id)
+        crate::context::create_context(context_id.to_string());
         for backend in self.backends.iter() {
             backend.context_created(context_id);
         }
