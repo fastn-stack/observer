@@ -37,20 +37,36 @@ pub trait Backend {
     fn span_ended(&self, id: &str);
 }
 
+pub struct Observer {
+    backends: Vec<Box<dyn Backend>>,
+    context: std::cell::RefCell<Box<Option<crate::Context>>>,
+}
+
 thread_local! {
     static OBSERVER: std::cell::RefCell<Option<Observer>> = std::cell::RefCell::new(None);
 }
 
-pub fn observe_new(backends: Vec<Box<dyn Backend>>) {
+pub fn create_observer(backends: Vec<Box<dyn Backend>>) {
     OBSERVER.with(|observer| {
         let mut observer = observer.borrow_mut();
         observer.replace(Observer::new(backends))
     });
 }
 
-pub struct Observer {
-    backends: Vec<Box<dyn Backend>>,
-    context: std::cell::RefCell<Box<Option<crate::Context>>>,
+pub fn create_context(context_id: &str) {
+    OBSERVER.with(|observer| {
+        if let Some(obj) = observer.borrow().as_ref() {
+            obj.create_context(context_id);
+        }
+    });
+}
+
+pub fn end_context() {
+    OBSERVER.with(|observer| {
+        if let Some(obj) = observer.borrow().as_ref() {
+            obj.end_context();
+        }
+    });
 }
 
 impl Observer {
@@ -67,16 +83,12 @@ impl Observer {
     }
     /// It will iterate through all backends and call their context_created method.
     pub fn create_context(&self, context_id: &str) {
-        // create context by calling context::create_context(context_id)
-        // crate::context::create_context(context_id.to_string());
         let mut context = self.context.borrow_mut();
-
         if context.is_none() {
             context.replace(crate::context::Context::new(context_id.to_string()));
-        }
-
-        for backend in self.backends.iter() {
-            backend.context_created(context_id);
+            for backend in self.backends.iter() {
+                backend.context_created(context_id);
+            }
         }
     }
 
