@@ -22,6 +22,7 @@ mod utils;
 pub use crate::context::Context;
 pub use crate::event::{Event, OEvent, OID};
 use std::env;
+
 #[cfg(test)]
 mod tests;
 pub type Result<T> = std::result::Result<T, failure::Error>;
@@ -34,6 +35,17 @@ pub trait Backend {
     fn span_created(&self, id: &str);
     fn span_data(&self, key: &str, value: &str);
     fn span_ended(&self, id: &str);
+}
+
+thread_local! {
+    static OBSERVER: std::cell::RefCell<Option<Observer>> = std::cell::RefCell::new(None);
+}
+
+pub fn observe_new(backends: Vec<Box<dyn Backend>>) {
+    OBSERVER.with(|observer| {
+        let mut observer = observer.borrow_mut();
+        observer.replace(Observer::new(backends))
+    });
 }
 
 pub struct Observer {

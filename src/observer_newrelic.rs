@@ -5,11 +5,11 @@ pub struct ObserverNewRelic {
 }
 
 impl ObserverNewRelic {
-    fn new() -> Self {
-        ObserverNewRelic {
-            segment_stack: RefCell::new(vec![]),
-        }
-    }
+    //    fn new() -> Self {
+    //        ObserverNewRelic {
+    //            segment_stack: RefCell::new(vec![]),
+    //        }
+    //    }
 }
 /// Implementation of Backend trait for NewRelic
 
@@ -51,5 +51,5 @@ impl crate::Backend for ObserverNewRelic {
 }
 
 fn _test() {
-    let _t: Box<dyn crate::Backend> = Box::new(ObserverNewRelic::new());
+    // let _t: Box<dyn crate::Backend> = Box::new(ObserverNewRelic::new());
 }
