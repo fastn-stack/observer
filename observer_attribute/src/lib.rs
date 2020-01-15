@@ -10,13 +10,13 @@ extern crate lazy_static;
 extern crate serde_derive;
 extern crate serde_json;
 
+use darling::FromMeta;
 use proc_macro::TokenStream;
 use proc_macro2::Span;
 use std::collections::HashMap;
 use std::str::FromStr;
 use std::string::ToString;
 use std::{env, fs::File};
-use syn::{AttributeArgs, Item, Lit, Meta, NestedMeta};
 
 #[derive(Debug, Deserialize, Clone)]
 struct Event {
@@ -36,66 +36,59 @@ lazy_static! {
     };
 }
 
-// TODO: Need to change and implement Parser for custom struct
-fn meta_parse(attr_args: Vec<NestedMeta>) -> (Option<String>, Option<String>) {
-    let error_message = r#"panic!("observer parser error:: attribute error, It should be like `#[observed(with_result, namespace="namespace_value")]`)"#;
-    if attr_args.len() == 0 {
-        return (None, None);
-    }
+#[derive(Debug, FromMeta)]
+struct MacroArgs {
+    #[darling(default)]
+    with_result: bool,
+    #[darling(default)]
+    without_result: bool,
+    #[darling(default)]
+    namespace: Option<String>,
+    #[darling(default)]
+    id: Option<String>,
+}
 
-    if attr_args.len() > 2 {
-        panic!(error_message)
-    }
-    let mut fn_return_type = None;
-    let mut namespace = None;
-
-    for attr in attr_args {
-        match attr {
-            NestedMeta::Meta(meta) => match meta {
-                Meta::Word(ident) => fn_return_type = Some(ident.to_string()),
-                Meta::NameValue(name_value) => {
-                    let namespace_key = name_value.ident.to_string();
-                    if namespace_key.as_str() != "namespace" {
-                        panic!("Key Error observer parser:: key name should be namespace")
-                    }
-                    match name_value.lit {
-                        Lit::Str(lit_str) => {
-                            namespace = Some(lit_str.value());
-                        }
-                        _ => panic!(error_message),
-                    }
-                }
-                _ => panic!(error_message),
-            },
-            _ => panic!(error_message),
+#[proc_macro_attribute]
+pub fn observed1(metadata: TokenStream, input: TokenStream) -> TokenStream {
+    let attr_args = parse_macro_input!(metadata as syn::AttributeArgs);
+    let args: MacroArgs = match MacroArgs::from_list(&attr_args) {
+        Ok(v) => v,
+        Err(e) => {
+            return e.write_errors().into();
         }
-    }
-    (fn_return_type, namespace)
+    };
+    println!("Args: {:?}", args);
+    quote!().into()
 }
 
 #[proc_macro_attribute]
 pub fn observed(metadata: TokenStream, input: TokenStream) -> TokenStream {
-    let (return_type, name_space) = meta_parse(parse_macro_input!(metadata as AttributeArgs));
+    let attr_args = parse_macro_input!(metadata as syn::AttributeArgs);
+    let args: MacroArgs = match MacroArgs::from_list(&attr_args) {
+        Ok(v) => v,
+        Err(e) => {
+            return e.write_errors().into();
+        }
+    };
 
-    let item: syn::Item = syn::parse(input).expect("failed to parse input");
-    let function = get_fn(item);
-    let visibility = function.vis;
-    let ident = function.ident;
-    let inputs = function.decl.inputs;
-    let output = function.decl.output;
-    let block = function.block;
-    let table_name = if let Some(name_space) = name_space {
+    let input_fn: syn::ItemFn = parse_macro_input!(input as syn::ItemFn);
+    let visibility = input_fn.vis;
+    let ident = input_fn.ident;
+    let inputs = input_fn.decl.inputs;
+    let output = input_fn.decl.output;
+    let block = input_fn.block;
+    let generics = &input_fn.decl.generics;
+    let where_clause = &input_fn.decl.generics.where_clause;
+    let table_name = if let Some(name_space) = args.namespace {
         name_space + "__" + &ident.to_string()
     } else {
         ident.to_string()
     };
     let block = rewrite_func_block(block, &table_name);
     let is_critical = get_event(&table_name).critical;
-    if return_type.is_none()
-        || return_type.is_some() && return_type.unwrap().as_str() == "with_result"
-    {
+    if args.with_result {
         (quote! {
-        #visibility fn #ident(#inputs) #output {
+        #visibility fn #ident #generics (#inputs) #output #where_clause {
             observe_with_result(#table_name, #is_critical, || {
                 #block
             })
@@ -104,7 +97,7 @@ pub fn observed(metadata: TokenStream, input: TokenStream) -> TokenStream {
         .into()
     } else {
         (quote! {
-        #visibility fn #ident(#inputs) #output {
+        #visibility fn #ident #generics (#inputs) #output #where_clause {
             observe_all(#table_name, #is_critical, || {
                 #block
             })
@@ -189,7 +182,7 @@ fn rewrite_func_block(mut block: Box<syn::Block>, table_name: &str) -> Box<syn::
 
 #[proc_macro_attribute]
 pub fn balanced_if(_metadata: TokenStream, input: TokenStream) -> TokenStream {
-    let item: Item = syn::parse(input).expect("failed to parse input");
+    let item: syn::Item = syn::parse(input).expect("failed to parse input");
 
     // log_simple(&format!("{:#?}", item));
     check_item(&item);
@@ -208,7 +201,7 @@ pub fn derive_resulty(input: TokenStream) -> TokenStream {
 
 fn get_struct_name(item: syn::Item) -> String {
     match item {
-        Item::Struct(struc) => struc.ident.to_string(),
+        syn::Item::Struct(struc) => struc.ident.to_string(),
         _ => panic!("this attribute macro can only apply on structs"),
     }
 }
@@ -238,17 +231,6 @@ fn get_rust_type(storage_type: &str) -> String {
     storage_type.to_lowercase()
 }
 
-//fn get_table_name(metadata: String) -> String {
-//    metadata
-//}
-
-fn get_fn(item: Item) -> syn::ItemFn {
-    match item {
-        Item::Fn(func) => func,
-        _ => panic!("this attribute macro can only apply on functions"),
-    }
-}
-
 //fn log_simple(msg: &str) {
 //    use std::io::prelude::*;
 //
@@ -266,9 +248,9 @@ fn get_fn(item: Item) -> syn::ItemFn {
 //    file.write_all("\n".as_bytes()).unwrap();
 //}
 
-fn check_item(item: &Item) {
+fn check_item(item: &syn::Item) {
     match item {
-        Item::Fn(func) => {
+        syn::Item::Fn(func) => {
             for stmt in func.block.stmts.iter() {
                 match stmt {
                     syn::Stmt::Local(local) => match &local.init {
