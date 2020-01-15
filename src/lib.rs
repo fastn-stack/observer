@@ -66,6 +66,54 @@ pub fn end_context() {
         if let Some(obj) = observer.borrow().as_ref() {
             obj.end_context();
         }
+        let mut observer = observer.borrow_mut();
+        observer.take();
+    });
+}
+
+pub(crate) fn start_span(id: &str) {
+    OBSERVER.with(|observer| {
+        if let Some(obj) = observer.borrow().as_ref() {
+            obj.create_span(id);
+        }
+    });
+}
+
+pub(crate) fn end_span(is_critical: bool, err: Option<String>) {
+    OBSERVER.with(|observer| {
+        if let Some(obj) = observer.borrow().as_ref() {
+            obj.end_span(is_critical, err);
+        }
+    });
+}
+
+//pub(crate) fn end_ctx_frame() {
+//    OBSERVER.with(|observer| {
+//        if let Some(obj) = observer.borrow().as_ref() {
+//            if let Some(ctx) = obj.context.borrow().as_ref() {
+//                ctx.end_ctx_frame();
+//            }
+//        }
+//    });
+//}
+
+pub(crate) fn observe_field(key: &str, value: serde_json::Value) {
+    OBSERVER.with(|observer| {
+        if let Some(obj) = observer.borrow().as_ref() {
+            if let Some(ctx) = obj.context.borrow().as_ref() {
+                ctx.observe_span_field(key, value)
+            }
+        }
+    });
+}
+
+pub(crate) fn observe_result(result: impl serde::Serialize) {
+    OBSERVER.with(|observer| {
+        if let Some(obj) = observer.borrow().as_ref() {
+            if let Some(ctx) = obj.context.borrow().as_ref() {
+                ctx.observe_span_result(result)
+            }
+        }
     });
 }
 
@@ -94,6 +142,9 @@ impl Observer {
 
     /// It will end context object and drop things if needed.
     pub fn end_context(&self) {
+        if let Some(ctx) = self.context.borrow().as_ref() {
+            let _ = ctx.finalise();
+        }
         for backend in self.backends.iter() {
             backend.context_ended();
         }

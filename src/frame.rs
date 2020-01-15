@@ -65,8 +65,8 @@ impl Span {
         self
     }
 
-    pub fn set_result(&mut self, result: serde_json::Value) -> &mut Self {
-        self.result = Some(result);
+    pub fn set_result(&mut self, result: impl serde::Serialize) -> &mut Self {
+        self.result = Some(json!(result));
         self
     }
 

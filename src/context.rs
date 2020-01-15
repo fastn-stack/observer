@@ -63,73 +63,73 @@ thread_local! {
     static CONTEXT: std::cell::RefCell<Option<Context>> = std::cell::RefCell::new(None);
 }
 
-pub fn create_context(id: String) {
-    CONTEXT.with(|obj| {
-        std::cell::RefCell::borrow_mut(obj);
-        let mut context = obj.borrow_mut();
-        if context.is_none() {
-            context.replace(Context::new(id));
-        }
-    });
-}
+//pub fn create_context(id: String) {
+//    CONTEXT.with(|obj| {
+//        std::cell::RefCell::borrow_mut(obj);
+//        let mut context = obj.borrow_mut();
+//        if context.is_none() {
+//            context.replace(Context::new(id));
+//        }
+//    });
+//}
 
-pub fn end_context() {
-    CONTEXT.with(|obj| {
-        if let Some(ref ctx) = obj.borrow().as_ref() {
-            let _ = ctx.finalise();
-        }
-        let mut context = obj.borrow_mut();
-        context.take();
-    });
-}
+//pub fn end_context() {
+//    CONTEXT.with(|obj| {
+//        if let Some(ref ctx) = obj.borrow().as_ref() {
+//            let _ = ctx.finalise();
+//        }
+//        let mut context = obj.borrow_mut();
+//        context.take();
+//    });
+//}
 
-pub fn start_frame(id: &str) {
-    CONTEXT.with(|obj| {
-        if let Some(ref ctx) = obj.borrow().as_ref() {
-            let _ = ctx.start_span(id);
-        }
-    });
-}
+//pub fn start_frame(id: &str) {
+//    CONTEXT.with(|obj| {
+//        if let Some(ref ctx) = obj.borrow().as_ref() {
+//            let _ = ctx.start_span(id);
+//        }
+//    });
+//}
 
-pub fn end_frame(is_critical: bool, err: Option<String>) {
-    CONTEXT.with(|obj| {
-        if let Some(ref ctx) = obj.borrow().as_ref() {
-            let _ = ctx.end_span(is_critical, err);
-        }
-    });
-}
+//pub fn end_frame(is_critical: bool, err: Option<String>) {
+//    CONTEXT.with(|obj| {
+//        if let Some(ref ctx) = obj.borrow().as_ref() {
+//            let _ = ctx.end_span(is_critical, err);
+//        }
+//    });
+//}
 
-pub fn end_ctx_frame() {
-    CONTEXT.with(|obj| {
-        if let Some(ref ctx) = obj.borrow().as_ref() {
-            let _ = ctx.end_ctx_frame();
-        }
-    });
-}
+//pub fn end_ctx_frame() {
+//    CONTEXT.with(|obj| {
+//        if let Some(ref ctx) = obj.borrow().as_ref() {
+//            let _ = ctx.end_ctx_frame();
+//        }
+//    });
+//}
 
-pub(crate) fn observe_field(name: &str, value: serde_json::Value) {
-    CONTEXT.with(|obj| {
-        if let Some(ref ctx) = obj.borrow().as_ref() {
-            let frame = ctx.span_stack.borrow_mut().pop();
-            if let Some(mut frame) = frame {
-                frame.add_breadcrumbs(name, json!(value));
-                ctx.span_stack.borrow_mut().push(frame);
-            }
-        }
-    });
-}
+//pub(crate) fn observe_field(name: &str, value: serde_json::Value) {
+//    CONTEXT.with(|obj| {
+//        if let Some(ref ctx) = obj.borrow().as_ref() {
+//            let frame = ctx.span_stack.borrow_mut().pop();
+//            if let Some(mut frame) = frame {
+//                frame.add_breadcrumbs(name, json!(value));
+//                ctx.span_stack.borrow_mut().push(frame);
+//            }
+//        }
+//    });
+//}
 
-pub fn observe_result(result: serde_json::Value) {
-    CONTEXT.with(|obj| {
-        if let Some(ref ctx) = obj.borrow().as_ref() {
-            let frame = ctx.span_stack.borrow_mut().pop();
-            if let Some(mut frame) = frame {
-                frame.set_result(result);
-                ctx.span_stack.borrow_mut().push(frame);
-            }
-        }
-    });
-}
+//pub fn observe_result(result: serde_json::Value) {
+//    CONTEXT.with(|obj| {
+//        if let Some(ref ctx) = obj.borrow().as_ref() {
+//            let frame = ctx.span_stack.borrow_mut().pop();
+//            if let Some(mut frame) = frame {
+//                frame.set_result(result);
+//                ctx.span_stack.borrow_mut().push(frame);
+//            }
+//        }
+//    });
+//}
 
 impl Context {
     pub fn new(id: String) -> Context {
@@ -142,6 +142,22 @@ impl Context {
 
     pub fn start_span(&self, id: &str) {
         self.span_stack.borrow_mut().push(Span::new(id));
+    }
+
+    pub(crate) fn observe_span_field(&self, key: &str, value: serde_json::Value) {
+        let frame = self.span_stack.borrow_mut().pop();
+        if let Some(mut frame) = frame {
+            frame.add_breadcrumbs(key, value);
+            self.span_stack.borrow_mut().push(frame);
+        }
+    }
+
+    pub(crate) fn observe_span_result(&self, value: impl serde::Serialize) {
+        let frame = self.span_stack.borrow_mut().pop();
+        if let Some(mut frame) = frame {
+            frame.set_result(value);
+            self.span_stack.borrow_mut().push(frame);
+        }
     }
 
     pub fn end_span(&self, _is_critical: bool, err: Option<String>) {
@@ -158,7 +174,7 @@ impl Context {
         }
     }
 
-    fn end_ctx_frame(&self) {
+    pub(crate) fn end_ctx_frame(&self) {
         let frame = self.span_stack.borrow_mut().pop();
         if let Some(mut frame) = frame {
             frame.end();
@@ -167,7 +183,6 @@ impl Context {
     }
 
     pub fn finalise(&self) -> Result<()> {
-        // TODO: For new_relic purpose, Later need to remove this dependency
         self.end_ctx_frame();
         if true {
         } else {

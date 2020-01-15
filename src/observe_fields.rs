@@ -1,4 +1,5 @@
-use crate::context::{observe_field, observe_result};
+use crate::observe_field;
+use crate::observe_result;
 use std::collections::HashMap;
 
 pub fn observe_string(name: &str, value: &str) {
