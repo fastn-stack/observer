@@ -41,12 +41,12 @@ impl crate::Backend for ObserverNewRelic {
     /// This method will be when span needs to logged.
     fn span_data(&self, _key: &str, _value: &str) {}
     /// This method will be when span ended.
-    fn span_ended(&self, id: &str) {
+    fn span_ended(&self) {
         // Needs to end a segment which was stored earlier in stack
         //        if let Some(segment) = self.segment_stack.borrow_mut().pop() {
         //            ackorelic::newrelic_fn::nr_end_custom_segment(segment);
         //        }
-        println!("ObserverNewRelic: Span Ended: {}", id)
+        println!("ObserverNewRelic: Span Ended")
     }
 }
 

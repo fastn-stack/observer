@@ -34,7 +34,7 @@ pub trait Backend {
     fn context_ended(&self);
     fn span_created(&self, id: &str);
     fn span_data(&self, key: &str, value: &str);
-    fn span_ended(&self, id: &str);
+    fn span_ended(&self);
 }
 
 pub struct Observer {
@@ -96,6 +96,23 @@ impl Observer {
     pub fn end_context(&self) {
         for backend in self.backends.iter() {
             backend.context_ended();
+        }
+    }
+
+    pub fn create_span(&self, id: &str) {
+        if let Some(ctx) = self.context.borrow().as_ref() {
+            ctx.start_span(id);
+        }
+        for backend in self.backends.iter() {
+            backend.span_created(id);
+        }
+    }
+    pub fn end_span(&self, is_critical: bool, err: Option<String>) {
+        if let Some(ctx) = self.context.borrow().as_ref() {
+            ctx.end_span(is_critical, err);
+        }
+        for backend in self.backends.iter() {
+            backend.span_ended();
         }
     }
 }

@@ -86,7 +86,7 @@ pub fn end_context() {
 pub fn start_frame(id: &str) {
     CONTEXT.with(|obj| {
         if let Some(ref ctx) = obj.borrow().as_ref() {
-            let _ = ctx.start_frame(id);
+            let _ = ctx.start_span(id);
         }
     });
 }
@@ -94,7 +94,7 @@ pub fn start_frame(id: &str) {
 pub fn end_frame(is_critical: bool, err: Option<String>) {
     CONTEXT.with(|obj| {
         if let Some(ref ctx) = obj.borrow().as_ref() {
-            let _ = ctx.end_frame(is_critical, err);
+            let _ = ctx.end_span(is_critical, err);
         }
     });
 }
@@ -140,11 +140,11 @@ impl Context {
         }
     }
 
-    pub fn start_frame(&self, id: &str) {
+    pub fn start_span(&self, id: &str) {
         self.span_stack.borrow_mut().push(Span::new(id));
     }
 
-    pub fn end_frame(&self, _is_critical: bool, err: Option<String>) {
+    pub fn end_span(&self, _is_critical: bool, err: Option<String>) {
         let child = self.span_stack.borrow_mut().pop();
         let parent = self.span_stack.borrow_mut().pop();
         if let Some(mut child_frame) = child {
