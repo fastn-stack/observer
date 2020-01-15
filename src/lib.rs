@@ -38,6 +38,7 @@ pub trait Backend {
 
 pub struct Observer {
     backends: Vec<Box<dyn Backend>>,
+    context: std::cell::RefCell<Box<Option<crate::Context>>>,
 }
 
 impl Observer {
@@ -47,12 +48,21 @@ impl Observer {
         for backend in backends.iter() {
             backend.app_started()
         }
-        Observer { backends }
+        Observer {
+            backends,
+            context: std::cell::RefCell::new(Box::new(None)),
+        }
     }
     /// It will iterate through all backends and call their context_created method.
     pub fn create_context(&self, context_id: &str) {
         // create context by calling context::create_context(context_id)
-        crate::context::create_context(context_id.to_string());
+        // crate::context::create_context(context_id.to_string());
+        let mut context = self.context.borrow_mut();
+
+        if context.is_none() {
+            context.replace(crate::context::Context::new(context_id.to_string()));
+        }
+
         for backend in self.backends.iter() {
             backend.context_created(context_id);
         }
