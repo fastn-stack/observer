@@ -5,6 +5,7 @@ extern crate serde_json;
 #[macro_use]
 extern crate lazy_static;
 extern crate failure;
+#[macro_use]
 extern crate observer_attribute;
 
 pub mod context;
@@ -18,6 +19,7 @@ pub mod observer_newrelic;
 #[cfg(feature = "postgres")]
 pub mod pg;
 pub mod prelude;
+mod sql_parse;
 mod utils;
 pub use crate::context::Context;
 pub use crate::event::{Event, OEvent, OID};
@@ -207,7 +209,6 @@ pub mod test_newrelic {
         println!("Events Completed");
         nr_end_transaction()
     }
-
 }
 
 /*

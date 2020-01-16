@@ -1,17 +1,13 @@
+use crate::observe::Observe;
+use crate::prelude::*;
 use diesel::prelude::*;
-
-#[cfg(debug_assertions)]
 use diesel::query_builder::QueryBuilder;
 
-#[cfg(debug_assertions)]
 pub struct DebugConnection {
     pub conn: diesel::PgConnection,
 }
 
-#[cfg(debug_assertions)]
 pub type OConnection = DebugConnection;
-#[cfg(not(debug_assertions))]
-pub type OConnection = diesel::PgConnection;
 
 lazy_static! {
     pub static ref PG_POOLS: antidote::RwLock<
@@ -19,14 +15,12 @@ lazy_static! {
     > = antidote::RwLock::new(std::collections::HashMap::new());
 }
 
-#[cfg(debug_assertions)]
 impl diesel::connection::SimpleConnection for OConnection {
     fn batch_execute(&self, query: &str) -> QueryResult<()> {
         self.conn.batch_execute(query)
     }
 }
 
-#[cfg(debug_assertions)]
 impl OConnection {
     fn new(url: &str) -> ConnectionResult<Self> {
         Ok(DebugConnection {
@@ -68,7 +62,6 @@ pub fn connection() -> r2d2::PooledConnection<r2d2_diesel::ConnectionManager<OCo
     connection_with_url(std::env::var("PG_DATABASE_URL").expect("DATABASE_URL not set"))
 }
 
-#[cfg(debug_assertions)]
 impl diesel::connection::Connection for OConnection {
     type Backend = diesel::pg::Pg;
     type TransactionManager = diesel::connection::AnsiTransactionManager;
@@ -83,6 +76,7 @@ impl diesel::connection::Connection for OConnection {
         r
     }
 
+    #[observed(with_result, namespace = "observer")]
     fn query_by_index<T, U>(&self, source: T) -> QueryResult<Vec<U>>
     where
         T: diesel::query_builder::AsQuery,
