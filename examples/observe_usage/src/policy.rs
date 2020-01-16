@@ -13,6 +13,9 @@ pub struct Policy {
 }
 
 impl Policy {
+    #[observed1(namespace = "foo")]
+    fn acbd() {}
+
     fn get_by_id(id: &str) -> Result<Policy> {
         Ok(Policy {
             id: id.into(),
