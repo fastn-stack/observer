@@ -1,8 +1,5 @@
 extern crate observe_usage;
-
 use observe_usage::policy::Policy;
-use observer::Observer;
-use std::string::ToString;
 
 fn main() {
 
