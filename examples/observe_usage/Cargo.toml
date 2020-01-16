@@ -21,7 +21,7 @@ ackorelic = "0.1.8"
 path="../../observer_attribute"
 
 [dependencies.observer]
-path="../../"
+path="../../observer"
 
 [dependencies.chrono]
 version = "0.4"
