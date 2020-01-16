@@ -54,6 +54,9 @@ impl Span {
             sub_frames: vec![],
         }
     }
+    pub(crate) fn set_id(&mut self, id: &str) {
+        self.id = id.to_string();
+    }
 
     pub fn start(&mut self) -> &mut Self {
         self.start_time = Utc::now();

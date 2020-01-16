@@ -113,7 +113,17 @@ pub(crate) fn observe_result(result: impl serde::Serialize) {
     OBSERVER.with(|observer| {
         if let Some(obj) = observer.borrow().as_ref() {
             if let Some(ctx) = obj.context.borrow().as_ref() {
-                ctx.observe_span_result(result)
+                ctx.observe_span_result(result);
+            }
+        }
+    });
+}
+
+pub(crate) fn observe_span_id(id: &str) {
+    OBSERVER.with(|observer| {
+        if let Some(obj) = observer.borrow().as_ref() {
+            if let Some(ctx) = obj.context.borrow().as_ref() {
+                ctx.observe_span_id(id);
             }
         }
     });

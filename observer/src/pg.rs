@@ -86,7 +86,11 @@ impl diesel::connection::Connection for OConnection {
         U: diesel::deserialize::Queryable<T::SqlType, diesel::pg::Pg>,
     {
         let query = source.as_query();
+
         let debug_query = diesel::debug_query(&query).to_string();
+        let (operation, table) = crate::sql_parse::parse_sql(&debug_query);
+        observe_field("query", &debug_query);
+        crate::observe_span_id(&format!("db__{}__{}", operation, table.replace("\"", "")));
         let r = self.conn.query_by_index(query);
         eprintln!("QueryByIndex: {}", debug_query.as_str());
         r

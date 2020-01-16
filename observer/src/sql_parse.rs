@@ -43,9 +43,9 @@ pub fn parse_sql(sql: &str) -> (String, String) {
                                         table_name.push(join.relation.to_string());
                                     }
                                 }
-                                return ("select".to_string(), table_name.join(", "));
+                                return ("select".to_string(), table_name.join("__"));
                             }
-                            _ => return (sql.to_string(), "".to_string()),
+                            _ => return ("unknown".to_string(), "unknown".to_string()),
                         };
                     }
                     Statement::Update { table_name, .. } => {
@@ -61,10 +61,10 @@ pub fn parse_sql(sql: &str) -> (String, String) {
                         return ("delete".to_string(), table_name.to_string());
                     }
                     Statement::CreateView { name, .. } => {
-                        return ("create view".to_string(), name.to_string());
+                        return ("create_view".to_string(), name.to_string());
                     }
                     Statement::CreateTable { name, .. } => {
-                        return ("create table".to_string(), name.to_string());
+                        return ("create_table".to_string(), name.to_string());
                     }
                     Statement::AlterTable { name, .. } => {
                         return ("alter".to_string(), name.to_string());
@@ -76,11 +76,11 @@ pub fn parse_sql(sql: &str) -> (String, String) {
                                 .iter()
                                 .map(|x| x.to_string())
                                 .collect::<Vec<String>>()
-                                .join(", "),
+                                .join("__"),
                         );
                     }
                     _ => {
-                        return (sql.to_string(), "".to_string());
+                        return ("unknown".to_string(), "unknown".to_string());
                     }
                 }
             }
@@ -88,11 +88,11 @@ pub fn parse_sql(sql: &str) -> (String, String) {
         Err(_err) => {
             #[cfg(debug_assertions)]
             println!("Err : {:?}", _err);
-            return (sql.to_string(), "".to_string());
+            return ("unknown".to_string(), "unknown".to_string());
         }
     };
 
-    (sql.to_string(), "".to_string())
+    ("unknown".to_string(), "unknown".to_string())
 }
 
 #[cfg(test)]

@@ -144,6 +144,14 @@ impl Context {
         self.span_stack.borrow_mut().push(Span::new(id));
     }
 
+    pub(crate) fn observe_span_id(&self, id: &str) {
+        let frame = self.span_stack.borrow_mut().pop();
+        if let Some(mut frame) = frame {
+            frame.set_id(id);
+            self.span_stack.borrow_mut().push(frame);
+        }
+    }
+
     pub(crate) fn observe_span_field(&self, key: &str, value: serde_json::Value) {
         let frame = self.span_stack.borrow_mut().pop();
         if let Some(mut frame) = frame {
