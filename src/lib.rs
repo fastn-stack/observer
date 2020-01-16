@@ -10,8 +10,8 @@ extern crate observer_attribute;
 pub mod context;
 mod event;
 mod frame;
-#[cfg(feature = "mysql")]
-pub mod mysql;
+//#[cfg(feature = "mysql")]
+//pub mod mysql;
 pub mod observe;
 pub mod observe_fields;
 pub mod observer_newrelic;
@@ -130,7 +130,7 @@ impl Observer {
         }
     }
     /// It will iterate through all backends and call their context_created method.
-    pub fn create_context(&self, context_id: &str) {
+    pub(crate) fn create_context(&self, context_id: &str) {
         let mut context = self.context.borrow_mut();
         if context.is_none() {
             context.replace(crate::context::Context::new(context_id.to_string()));
@@ -141,7 +141,7 @@ impl Observer {
     }
 
     /// It will end context object and drop things if needed.
-    pub fn end_context(&self) {
+    pub(crate) fn end_context(&self) {
         if let Some(ctx) = self.context.borrow().as_ref() {
             let _ = ctx.finalise();
         }
@@ -150,7 +150,7 @@ impl Observer {
         }
     }
 
-    pub fn create_span(&self, id: &str) {
+    pub(crate) fn create_span(&self, id: &str) {
         if let Some(ctx) = self.context.borrow().as_ref() {
             ctx.start_span(id);
         }
@@ -158,7 +158,7 @@ impl Observer {
             backend.span_created(id);
         }
     }
-    pub fn end_span(&self, is_critical: bool, err: Option<String>) {
+    pub(crate) fn end_span(&self, is_critical: bool, err: Option<String>) {
         if let Some(ctx) = self.context.borrow().as_ref() {
             ctx.end_span(is_critical, err);
         }

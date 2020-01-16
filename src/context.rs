@@ -185,6 +185,7 @@ impl Context {
     pub fn finalise(&self) -> Result<()> {
         self.end_ctx_frame();
         if true {
+            println!("{:#?}", self.span_stack);
         } else {
             if is_ctx_dir_exists() {
                 match utils::create_file(&CONTEXT_DIR, self.key.as_str()) {
