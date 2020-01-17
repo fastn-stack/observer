@@ -1,5 +1,4 @@
 use crate::observe::Observe;
-use crate::prelude::*;
 use diesel::prelude::*;
 use diesel::query_builder::QueryBuilder;
 
@@ -66,17 +65,22 @@ impl diesel::connection::Connection for OConnection {
     type Backend = diesel::pg::Pg;
     type TransactionManager = diesel::connection::AnsiTransactionManager;
 
+    #[observed]
     fn establish(url: &str) -> ConnectionResult<Self> {
         OConnection::new(url)
     }
 
+    #[observed]
     fn execute(&self, query: &str) -> QueryResult<usize> {
+        let (operation, table) = crate::sql_parse::parse_sql(&query);
+        crate::observe_fields::observe_string("query", &query);
+        crate::observe_span_id(&format!("db__{}__{}", operation, table.replace("\"", "")));
         let r = self.conn.execute(query);
         eprintln!("ExecuteQuery: {}", query);
         r
     }
 
-    #[observed(with_result, namespace = "observer")]
+    #[observed] // Will not use any namespace here because whitelisting by `query_by_index`
     fn query_by_index<T, U>(&self, source: T) -> QueryResult<Vec<U>>
     where
         T: diesel::query_builder::AsQuery,
@@ -89,13 +93,14 @@ impl diesel::connection::Connection for OConnection {
 
         let debug_query = diesel::debug_query(&query).to_string();
         let (operation, table) = crate::sql_parse::parse_sql(&debug_query);
-        observe_field("query", &debug_query);
+        crate::observe_fields::observe_string("query", &debug_query);
         crate::observe_span_id(&format!("db__{}__{}", operation, table.replace("\"", "")));
         let r = self.conn.query_by_index(query);
         eprintln!("QueryByIndex: {}", debug_query.as_str());
         r
     }
 
+    #[observed]
     fn query_by_name<T, U>(&self, source: &T) -> QueryResult<Vec<U>>
     where
         T: diesel::query_builder::QueryFragment<diesel::pg::Pg> + diesel::query_builder::QueryId,
@@ -106,11 +111,15 @@ impl diesel::connection::Connection for OConnection {
             source.to_sql(&mut qb)?;
             qb.finish()
         };
+        let (operation, table) = crate::sql_parse::parse_sql(&query);
+        crate::observe_fields::observe_string("query", &query);
+        crate::observe_span_id(&format!("db__{}__{}", operation, table.replace("\"", "")));
         let r = self.conn.query_by_name(source);
-        eprintln!("QueryByName: {}", query.as_str());
+        // eprintln!("QueryByName: {}", query.as_str());
         r
     }
 
+    #[observed]
     fn execute_returning_count<T>(&self, source: &T) -> QueryResult<usize>
     where
         T: diesel::query_builder::QueryFragment<diesel::pg::Pg> + diesel::query_builder::QueryId,
@@ -120,6 +129,9 @@ impl diesel::connection::Connection for OConnection {
             source.to_sql(&mut qb)?;
             qb.finish()
         };
+        let (operation, table) = crate::sql_parse::parse_sql(&query);
+        crate::observe_fields::observe_string("query", &query);
+        crate::observe_span_id(&format!("db__{}__{}", operation, table.replace("\"", "")));
         let r = self.conn.execute_returning_count(source);
         eprintln!("ExecuteReturningCount: {}", query.as_str());
         r
