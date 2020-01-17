@@ -65,12 +65,12 @@ impl diesel::connection::Connection for OConnection {
     type Backend = diesel::pg::Pg;
     type TransactionManager = diesel::connection::AnsiTransactionManager;
 
-    #[observed]
+    #[observed(namespace="observer::pg")]
     fn establish(url: &str) -> ConnectionResult<Self> {
         OConnection::new(url)
     }
 
-    #[observed]
+    #[observed(namespace="observer::pg")]
     fn execute(&self, query: &str) -> QueryResult<usize> {
         let (operation, table) = crate::sql_parse::parse_sql(&query);
         crate::observe_fields::observe_string("query", &query);
@@ -80,7 +80,7 @@ impl diesel::connection::Connection for OConnection {
         r
     }
 
-    #[observed] // Will not use any namespace here because whitelisting by `query_by_index`
+    #[observed(namespace="observer::pg")] // Will not use any namespace here because whitelisting by `query_by_index`
     fn query_by_index<T, U>(&self, source: T) -> QueryResult<Vec<U>>
     where
         T: diesel::query_builder::AsQuery,
@@ -100,7 +100,7 @@ impl diesel::connection::Connection for OConnection {
         r
     }
 
-    #[observed]
+    #[observed(namespace="observer::pg")]
     fn query_by_name<T, U>(&self, source: &T) -> QueryResult<Vec<U>>
     where
         T: diesel::query_builder::QueryFragment<diesel::pg::Pg> + diesel::query_builder::QueryId,
@@ -119,7 +119,7 @@ impl diesel::connection::Connection for OConnection {
         r
     }
 
-    #[observed]
+    #[observed(namespace="observer::pg")]
     fn execute_returning_count<T>(&self, source: &T) -> QueryResult<usize>
     where
         T: diesel::query_builder::QueryFragment<diesel::pg::Pg> + diesel::query_builder::QueryId,

@@ -39,6 +39,7 @@ lazy_static! {
 const WHITELIST_EVENTS: &'static [&'static str] =
     &["query_by_index", "establish", "execute", "query_by_name", "execute_returning_count"];
 
+const WHITELIST_NAMESPACES: &'static [&'static str] = &["observer::pg"];
 #[derive(Debug, FromMeta)]
 struct MacroArgs {
     #[darling(default)]
@@ -69,13 +70,14 @@ pub fn observed(metadata: TokenStream, input: TokenStream) -> TokenStream {
     let block = input_fn.block;
     let generics = &input_fn.decl.generics;
     let where_clause = &input_fn.decl.generics.where_clause;
-    let is_white_list = WHITELIST_EVENTS.contains(&ident.to_string().as_str());
+    let is_whitelist_event = WHITELIST_EVENTS.contains(&ident.to_string().as_str());
+    let is_whitelist_namespace = WHITELIST_NAMESPACES.contains(&args.namespace.as_ref().unwrap_or(&"".to_string()).as_str());
     let table_name = if let Some(name_space) = args.namespace {
         name_space + "__" + &ident.to_string()
     } else {
         ident.to_string()
     };
-    let (block, is_critical) = if is_white_list {
+    let (block, is_critical) = if is_whitelist_event && is_whitelist_namespace {
         (block, false)
     } else {
         (
