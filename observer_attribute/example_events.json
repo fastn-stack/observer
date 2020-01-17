@@ -37,5 +37,10 @@
       "qid" : "i32",
       "premium" : "string"
     }
+  },
+  "db_call" : {
+    "critical" : false,
+    "result_type": "i32",
+    "fields" : {}
   }
 }
