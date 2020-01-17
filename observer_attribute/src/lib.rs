@@ -36,6 +36,9 @@ lazy_static! {
     };
 }
 
+const WHITELIST_EVENTS: &'static [&'static str] =
+    &["query_by_index", "establish", "execute", "query_by_name", "execute_returning_count"];
+
 #[derive(Debug, FromMeta)]
 struct MacroArgs {
     #[darling(default)]
@@ -46,19 +49,6 @@ struct MacroArgs {
     namespace: Option<String>,
     #[darling(default)]
     id: Option<String>,
-}
-
-#[proc_macro_attribute]
-pub fn observed1(metadata: TokenStream, input: TokenStream) -> TokenStream {
-    let attr_args = parse_macro_input!(metadata as syn::AttributeArgs);
-    let args: MacroArgs = match MacroArgs::from_list(&attr_args) {
-        Ok(v) => v,
-        Err(e) => {
-            return e.write_errors().into();
-        }
-    };
-    println!("Args: {:?}", args);
-    quote!().into()
 }
 
 #[proc_macro_attribute]
@@ -79,17 +69,24 @@ pub fn observed(metadata: TokenStream, input: TokenStream) -> TokenStream {
     let block = input_fn.block;
     let generics = &input_fn.decl.generics;
     let where_clause = &input_fn.decl.generics.where_clause;
+    let is_white_list = WHITELIST_EVENTS.contains(&ident.to_string().as_str());
     let table_name = if let Some(name_space) = args.namespace {
         name_space + "__" + &ident.to_string()
     } else {
         ident.to_string()
     };
-    let block = rewrite_func_block(block, &table_name);
-    let is_critical = get_event(&table_name).critical;
+    let (block, is_critical) = if is_white_list {
+        (block, false)
+    } else {
+        (
+            rewrite_func_block(block, &table_name),
+            get_event(&table_name).critical,
+        )
+    };
     if args.with_result {
         (quote! {
         #visibility fn #ident #generics (#inputs) #output #where_clause {
-            observe_with_result(#table_name, #is_critical, || {
+            Observe::observe_with_result(#table_name, #is_critical, || {
                 #block
             })
         }
@@ -98,7 +95,7 @@ pub fn observed(metadata: TokenStream, input: TokenStream) -> TokenStream {
     } else {
         (quote! {
         #visibility fn #ident #generics (#inputs) #output #where_clause {
-            observe_all(#table_name, #is_critical, || {
+            Observe::observe_all(#table_name, #is_critical, || {
                 #block
             })
         }
