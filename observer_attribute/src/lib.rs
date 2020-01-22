@@ -36,8 +36,13 @@ lazy_static! {
     };
 }
 
-const WHITELIST_EVENTS: &'static [&'static str] =
-    &["query_by_index", "establish", "execute", "query_by_name", "execute_returning_count"];
+const WHITELIST_EVENTS: &'static [&'static str] = &[
+    "query_by_index",
+    "establish",
+    "execute",
+    "query_by_name",
+    "execute_returning_count",
+];
 
 const WHITELIST_NAMESPACES: &'static [&'static str] = &["observer::pg"];
 #[derive(Debug, FromMeta)]
@@ -71,7 +76,8 @@ pub fn observed(metadata: TokenStream, input: TokenStream) -> TokenStream {
     let generics = &input_fn.decl.generics;
     let where_clause = &input_fn.decl.generics.where_clause;
     let is_whitelist_event = WHITELIST_EVENTS.contains(&ident.to_string().as_str());
-    let is_whitelist_namespace = WHITELIST_NAMESPACES.contains(&args.namespace.as_ref().unwrap_or(&"".to_string()).as_str());
+    let is_whitelist_namespace =
+        WHITELIST_NAMESPACES.contains(&args.namespace.as_ref().unwrap_or(&"".to_string()).as_str());
     let table_name = if let Some(name_space) = args.namespace {
         name_space + "__" + &ident.to_string()
     } else {
