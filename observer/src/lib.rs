@@ -10,7 +10,7 @@ extern crate observer_attribute;
 
 pub mod context;
 mod event;
-mod frame;
+mod span;
 //#[cfg(feature = "mysql")]
 //pub mod mysql;
 pub mod observe;

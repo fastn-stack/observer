@@ -1,4 +1,4 @@
-use crate::{frame::Span, utils, Result};
+use crate::{span::Span, utils, Result};
 use serde_derive::{Deserialize, Serialize};
 use std::io::Write;
 

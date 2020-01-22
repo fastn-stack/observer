@@ -26,7 +26,7 @@ impl Clone for Span {
 
 impl Debug for Span {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        f.debug_struct("Frame")
+        f.debug_struct("Span")
             .field("id", &self.id)
             .field("key", &self.key)
             .field("breadcrumbs", &self.breadcrumbs)
