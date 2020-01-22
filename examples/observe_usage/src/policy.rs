@@ -29,15 +29,14 @@ impl Policy {
             name: name.into(),
             updated_on: Utc::now(),
         };
-        //observe_field("pid", "activa_policy_id");
+        observe_field("pid", "activa_policy_pid");
+        observe_field("qid", "activa_policy_qid");
         let mut hm = HashMap::new();
         hm.insert("sds", 1);
         let _t: Vec<String> = Vec::new();
         //observe_result(&t);
         let _ = Policy::update_policy("policy_id1", "name1");
         let _ = Policy::update_policy1("policy_id2", "name2");
-        //let _ = Policy::update_policy2("policy_id2", "name2");
-        //observe_field("pid", "activa_policy_id");
         Ok(policy)
     }
 

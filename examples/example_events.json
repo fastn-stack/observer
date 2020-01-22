@@ -3,7 +3,8 @@
     "critical" : true,
     "result_type": "list",
     "fields" : {
-      "pid" : "string"
+      "pid" : "string",
+      "qid": "string"
     }
   },
   "update_policy" : {

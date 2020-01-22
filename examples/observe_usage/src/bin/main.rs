@@ -6,7 +6,6 @@ fn main() {
         observer::observer_newrelic::ObserverNewRelic::new(),
     )];
     observer::create_observer(back);
-
     observer::create_context("main");
     let _result = Policy::create_policy("activa_policy");
     observer::end_context();
