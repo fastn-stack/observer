@@ -13,6 +13,7 @@ pub struct Span {
     pub success: Option<bool>,
     pub result: Option<serde_json::Value>,
     pub err: Option<String>,
+    pub logs: Vec<(DateTime<Utc>, String)>,
     pub start_time: DateTime<Utc>,
     pub end_time: Option<DateTime<Utc>>,
     pub sub_frames: Vec<Span>,
@@ -33,6 +34,7 @@ impl Debug for Span {
             .field("success", &self.success)
             .field("result", &self.result)
             .field("err", &self.err)
+            .field("logs", &self.logs)
             .field("start_time", &self.start_time)
             .field("end_time", &self.end_time)
             .field("sub_frames", &self.sub_frames)
@@ -49,6 +51,7 @@ impl Span {
             success: None,
             result: None,
             err: None,
+            logs: vec![],
             start_time: Utc::now(),
             end_time: None,
             sub_frames: vec![],
@@ -89,6 +92,10 @@ impl Span {
 
     pub fn get_key(&self) -> String {
         self.key.clone()
+    }
+
+    pub fn add_logs(&mut self, log: &str) {
+        self.logs.push((Utc::now(), log.to_string()))
     }
 
     pub fn save_on_local(&self) {
