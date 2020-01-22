@@ -4,6 +4,7 @@ use std::io::Write;
 
 pub static mut DIR_EXISTS: bool = false;
 pub static mut CON_DIR_EXISTS: bool = false;
+static SPACE: usize = 4;
 
 lazy_static! {
     pub static ref LOG_DIR: String = {
@@ -62,74 +63,6 @@ pub struct Context {
 thread_local! {
     static CONTEXT: std::cell::RefCell<Option<Context>> = std::cell::RefCell::new(None);
 }
-
-//pub fn create_context(id: String) {
-//    CONTEXT.with(|obj| {
-//        std::cell::RefCell::borrow_mut(obj);
-//        let mut context = obj.borrow_mut();
-//        if context.is_none() {
-//            context.replace(Context::new(id));
-//        }
-//    });
-//}
-
-//pub fn end_context() {
-//    CONTEXT.with(|obj| {
-//        if let Some(ref ctx) = obj.borrow().as_ref() {
-//            let _ = ctx.finalise();
-//        }
-//        let mut context = obj.borrow_mut();
-//        context.take();
-//    });
-//}
-
-//pub fn start_frame(id: &str) {
-//    CONTEXT.with(|obj| {
-//        if let Some(ref ctx) = obj.borrow().as_ref() {
-//            let _ = ctx.start_span(id);
-//        }
-//    });
-//}
-
-//pub fn end_frame(is_critical: bool, err: Option<String>) {
-//    CONTEXT.with(|obj| {
-//        if let Some(ref ctx) = obj.borrow().as_ref() {
-//            let _ = ctx.end_span(is_critical, err);
-//        }
-//    });
-//}
-
-//pub fn end_ctx_frame() {
-//    CONTEXT.with(|obj| {
-//        if let Some(ref ctx) = obj.borrow().as_ref() {
-//            let _ = ctx.end_ctx_frame();
-//        }
-//    });
-//}
-
-//pub(crate) fn observe_field(name: &str, value: serde_json::Value) {
-//    CONTEXT.with(|obj| {
-//        if let Some(ref ctx) = obj.borrow().as_ref() {
-//            let frame = ctx.span_stack.borrow_mut().pop();
-//            if let Some(mut frame) = frame {
-//                frame.add_breadcrumbs(name, json!(value));
-//                ctx.span_stack.borrow_mut().push(frame);
-//            }
-//        }
-//    });
-//}
-
-//pub fn observe_result(result: serde_json::Value) {
-//    CONTEXT.with(|obj| {
-//        if let Some(ref ctx) = obj.borrow().as_ref() {
-//            let frame = ctx.span_stack.borrow_mut().pop();
-//            if let Some(mut frame) = frame {
-//                frame.set_result(result);
-//                ctx.span_stack.borrow_mut().push(frame);
-//            }
-//        }
-//    });
-//}
 
 impl Context {
     pub fn new(id: String) -> Context {
@@ -193,7 +126,8 @@ impl Context {
     pub fn finalise(&self) -> Result<()> {
         self.end_ctx_frame();
         if true {
-            println!("{:#?}", self.span_stack);
+            // println!("{:#?}", self.span_stack);
+            print_context(&self);
         } else {
             if is_ctx_dir_exists() {
                 match utils::create_file(&CONTEXT_DIR, self.key.as_str()) {
@@ -213,5 +147,60 @@ impl Context {
 
     pub fn get_key(&self) -> String {
         self.key.clone()
+    }
+}
+
+pub(crate) fn print_context(ctx: &Context) {
+    let mut writer = "".to_string();
+    let frame = ctx.span_stack.borrow();
+    if let Some(frame) = frame.first() {
+        let dur = frame
+            .end_time
+            .as_ref()
+            .unwrap_or(&chrono::Utc::now())
+            .signed_duration_since(frame.start_time);
+        writer.push_str(&format!(
+            "context: {} [{}ms, {}]\n",
+            ctx.id,
+            dur.num_milliseconds(),
+            frame.start_time
+        ));
+        print_span(&mut writer, &frame.sub_frames, SPACE);
+    }
+    println!("{}", writer);
+}
+
+pub(crate) fn print_span(writer: &mut String, spans: &Vec<Span>, space: usize) {
+    for span in spans.iter() {
+        let dur = span
+            .end_time
+            .as_ref()
+            .unwrap_or(&chrono::Utc::now())
+            .signed_duration_since(span.start_time);
+        writer.push_str(&format!(
+            "{:>space$}{}: {}ms\n",
+            "",
+            span.id,
+            dur.num_milliseconds(),
+            space = space
+        ));
+        for (key, value) in span.breadcrumbs.iter() {
+            writer.push_str(&format!(
+                "{:>space$}@{}: {}\n",
+                "",
+                key,
+                value,
+                space = space + SPACE
+            ));
+        }
+        if let Some(success) = span.success {
+            writer.push_str(&format!(
+                "{:>space$}@@success: {}\n",
+                "",
+                success,
+                space = space + SPACE
+            ));
+        }
+        print_span(writer, &span.sub_frames, space + SPACE);
     }
 }
