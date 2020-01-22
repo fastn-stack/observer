@@ -31,6 +31,8 @@ impl Policy {
         };
         observe_field("pid", "activa_policy_pid");
         observe_field("qid", "activa_policy_qid");
+        observer::observe_span_log("Message: 1 from create policy");
+        observer::observe_span_log("Message: 2 from create policy");
         let mut hm = HashMap::new();
         hm.insert("sds", 1);
         let _t: Vec<String> = Vec::new();
