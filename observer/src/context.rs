@@ -101,6 +101,14 @@ impl Context {
         }
     }
 
+    pub(crate) fn span_log(&self, value: &str) {
+        let frame = self.span_stack.borrow_mut().pop();
+        if let Some(mut frame) = frame {
+            frame.add_logs(value);
+            self.span_stack.borrow_mut().push(frame);
+        }
+    }
+
     pub fn end_span(&self, _is_critical: bool, err: Option<String>) {
         let child = self.span_stack.borrow_mut().pop();
         let parent = self.span_stack.borrow_mut().pop();
@@ -201,6 +209,26 @@ pub(crate) fn print_span(writer: &mut String, spans: &Vec<Span>, space: usize) {
                 space = space + SPACE
             ));
         }
+        if span.logs.len() > 0 {
+            writer.push_str(&format!(
+                "{:>space$}logs:\n",
+                "",
+                space = space + SPACE
+            ));
+            for log in span.logs.iter() {
+                let dur = span
+                    .start_time
+                    .signed_duration_since(log.0).num_milliseconds();
+                writer.push_str(&format!(
+                    "{:>space$} {}ms: {log}\n",
+                    "",
+                    dur,
+                    log=log.1,
+                    space = space + SPACE + 2,
+                ));
+            }
+        }
+
         print_span(writer, &span.sub_frames, space + SPACE);
     }
 }

@@ -73,6 +73,14 @@ pub fn end_context() {
     });
 }
 
+pub fn observe_span_log(value: &str) {
+    OBSERVER.with(|observer| {
+        if let Some(obj) = observer.borrow().as_ref() {
+            obj.span_log(value);
+        }
+    });
+}
+
 pub(crate) fn start_span(id: &str) {
     OBSERVER.with(|observer| {
         if let Some(obj) = observer.borrow().as_ref() {
@@ -176,6 +184,12 @@ impl Observer {
         }
         for backend in self.backends.iter() {
             backend.span_ended();
+        }
+    }
+
+    pub(crate) fn span_log(&self, value: &str) {
+        if let Some(ctx) = self.context.borrow().as_ref() {
+            ctx.span_log(value);
         }
     }
 }

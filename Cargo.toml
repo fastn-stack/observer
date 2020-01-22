@@ -1,6 +1,5 @@
 [workspace]
 members = [
-    "examples/attribute_test",
     "examples/observe_usage",
     "observer_attribute",
     "observer"
