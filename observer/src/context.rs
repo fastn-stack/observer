@@ -210,20 +210,17 @@ pub(crate) fn print_span(writer: &mut String, spans: &Vec<Span>, space: usize) {
             ));
         }
         if span.logs.len() > 0 {
-            writer.push_str(&format!(
-                "{:>space$}logs:\n",
-                "",
-                space = space + SPACE
-            ));
+            writer.push_str(&format!("{:>space$}logs:\n", "", space = space + SPACE));
             for log in span.logs.iter() {
                 let dur = span
                     .start_time
-                    .signed_duration_since(log.0).num_milliseconds();
+                    .signed_duration_since(log.0)
+                    .num_milliseconds();
                 writer.push_str(&format!(
                     "{:>space$} {}ms: {log}\n",
                     "",
                     dur,
-                    log=log.1,
+                    log = log.1,
                     space = space + SPACE + 2,
                 ));
             }

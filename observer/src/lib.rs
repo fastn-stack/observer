@@ -10,7 +10,6 @@ extern crate observer_attribute;
 
 pub mod context;
 mod event;
-mod span;
 #[cfg(feature = "mysql")]
 pub mod mysql;
 pub mod observe;
@@ -19,6 +18,7 @@ pub mod observer_newrelic;
 #[cfg(feature = "postgres")]
 pub mod pg;
 pub mod prelude;
+mod span;
 mod sql_parse;
 mod utils;
 pub use crate::context::Context;
