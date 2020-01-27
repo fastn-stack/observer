@@ -11,8 +11,8 @@ extern crate observer_attribute;
 pub mod context;
 mod event;
 mod span;
-//#[cfg(feature = "mysql")]
-//pub mod mysql;
+#[cfg(feature = "mysql")]
+pub mod mysql;
 pub mod observe;
 pub mod observe_fields;
 pub mod observer_newrelic;
@@ -234,22 +234,3 @@ pub mod test_newrelic {
         nr_end_transaction()
     }
 }
-
-/*
-enum Value {
-    // all big query data types
-};
-
-type AttachedData = HashMap<String, Value>;
-
-impl From<i32> for Value {
-    fn from(v: i32) -> Value {
-        Value::Int(v)
-    }
-}
-
-
-pub fn attach(cd: mut AttachedData, key: &str, value: Into<Value>) {
-    unimplemented!()
-}
-*/
