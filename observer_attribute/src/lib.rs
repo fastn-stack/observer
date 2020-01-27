@@ -44,7 +44,7 @@ const WHITELIST_EVENTS: &'static [&'static str] = &[
     "execute_returning_count",
 ];
 
-const WHITELIST_NAMESPACES: &'static [&'static str] = &["observer::pg"];
+const WHITELIST_NAMESPACES: &'static [&'static str] = &["observer::pg", "observer__mysql"];
 #[derive(Debug, FromMeta)]
 struct MacroArgs {
     #[darling(default)]
