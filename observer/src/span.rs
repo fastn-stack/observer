@@ -1,7 +1,5 @@
 use crate::context::{is_log_dir_exists, LOG_DIR};
-use crate::{queue::Queue, utils};
-use ackorelic::acko_segment::Segment;
-use ackorelic::newrelic_fn::{nr_end_custom_segment, nr_start_custom_segment};
+use crate::utils;
 use chrono::prelude::*;
 use std::collections::HashMap;
 use std::fmt::{self, Debug};
@@ -15,11 +13,10 @@ pub struct Span {
     pub success: Option<bool>,
     pub result: Option<serde_json::Value>,
     pub err: Option<String>,
+    pub logs: Vec<(DateTime<Utc>, String)>,
     pub start_time: DateTime<Utc>,
     pub end_time: Option<DateTime<Utc>>,
     pub sub_frames: Vec<Span>,
-    #[serde(skip)]
-    segment: Option<Segment>,
 }
 
 impl Clone for Span {
@@ -30,13 +27,14 @@ impl Clone for Span {
 
 impl Debug for Span {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        f.debug_struct("Frame")
+        f.debug_struct("Span")
             .field("id", &self.id)
             .field("key", &self.key)
             .field("breadcrumbs", &self.breadcrumbs)
             .field("success", &self.success)
             .field("result", &self.result)
             .field("err", &self.err)
+            .field("logs", &self.logs)
             .field("start_time", &self.start_time)
             .field("end_time", &self.end_time)
             .field("sub_frames", &self.sub_frames)
@@ -47,17 +45,20 @@ impl Debug for Span {
 impl Span {
     pub fn new(id: &str) -> Span {
         Span {
-            segment: Some(nr_start_custom_segment(&id)),
             id: id.to_owned(),
             key: uuid::Uuid::new_v4().to_string(),
             breadcrumbs: HashMap::new(),
             success: None,
             result: None,
             err: None,
+            logs: vec![],
             start_time: Utc::now(),
             end_time: None,
             sub_frames: vec![],
         }
+    }
+    pub(crate) fn set_id(&mut self, id: &str) {
+        self.id = id.to_string();
     }
 
     pub fn start(&mut self) -> &mut Self {
@@ -66,16 +67,12 @@ impl Span {
     }
 
     pub fn end(&mut self) -> &mut Self {
-        // TODO: For new_relic purpose, Later need to remove this dependency
-        if let Some(segment) = self.segment.take() {
-            nr_end_custom_segment(segment);
-        }
         self.end_time = Some(Utc::now());
         self
     }
 
-    pub fn set_result(&mut self, result: serde_json::Value) -> &mut Self {
-        self.result = Some(result);
+    pub fn set_result(&mut self, result: impl serde::Serialize) -> &mut Self {
+        self.result = Some(json!(result));
         self
     }
 
@@ -97,12 +94,8 @@ impl Span {
         self.key.clone()
     }
 
-    pub fn save(&self, critical: bool, queue: &Box<dyn Queue>) {
-        if critical {
-            self.enqueue(queue)
-        } else {
-            self.save_on_local()
-        }
+    pub fn add_logs(&mut self, log: &str) {
+        self.logs.push((Utc::now(), log.to_string()))
     }
 
     pub fn save_on_local(&self) {
@@ -123,10 +116,6 @@ impl Span {
                 }
             };
         }
-    }
-
-    pub fn enqueue(&self, queue: &Box<dyn Queue>) {
-        queue.enqueue(json!(self))
     }
 
     //adding breadcrumbs

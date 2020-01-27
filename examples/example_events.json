@@ -3,7 +3,8 @@
     "critical" : true,
     "result_type": "list",
     "fields" : {
-      "pid" : "string"
+      "pid" : "string",
+      "qid": "string"
     }
   },
   "update_policy" : {
@@ -37,5 +38,10 @@
       "qid" : "i32",
       "premium" : "string"
     }
+  },
+  "db_call" : {
+    "critical" : false,
+    "result_type": "i32",
+    "fields" : {}
   }
 }

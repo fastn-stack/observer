@@ -3,7 +3,6 @@ use chrono::prelude::*;
 use observer::prelude::*;
 use observer::Result;
 use std::collections::HashMap;
-use std::{thread, time};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Policy {
@@ -30,21 +29,22 @@ impl Policy {
             name: name.into(),
             updated_on: Utc::now(),
         };
-        //observe_field("pid", "activa_policy_id");
+        observe_field("pid", "activa_policy_pid");
+        observe_field("qid", "activa_policy_qid");
+        observer::observe_span_log("Message: 1 from create policy");
+        observer::observe_span_log("Message: 2 from create policy");
         let mut hm = HashMap::new();
         hm.insert("sds", 1);
         let _t: Vec<String> = Vec::new();
         //observe_result(&t);
-        //let _ = Policy::update_policy("policy_id1", "name1");
-        //let _ = Policy::update_policy1("policy_id2", "name2");
-        //let _ = Policy::update_policy2("policy_id2", "name2");
-        //observe_field("pid", "activa_policy_id");
+        let _ = Policy::update_policy("policy_id1", "name1");
+        let _ = Policy::update_policy1("policy_id2", "name2");
         Ok(policy)
     }
 
     #[observed(without_result)]
     pub fn update_policy(pid: &str, _name: &str) -> Result<Policy> {
-        thread::sleep(time::Duration::from_secs(3));
+        //thread::sleep(time::Duration::from_secs(3));
         let p = Policy::get_by_id(pid)?;
         observe_field("qid", 4839);
         observe_result(1234);
@@ -53,7 +53,7 @@ impl Policy {
     //
     #[observed(with_result, namespace = "namespace")]
     pub fn update_policy1(pid: &str, _name: &str) -> Result<Policy> {
-        thread::sleep(time::Duration::from_secs(3));
+        //thread::sleep(time::Duration::from_secs(3));
         let p = Policy::get_by_id(pid)?;
         observe_field("qid", 4839);
         observe_result(2314);
