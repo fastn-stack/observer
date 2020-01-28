@@ -42,18 +42,24 @@ pub trait Backend {
 pub struct Observer {
     backends: Vec<Box<dyn Backend>>,
     context: std::cell::RefCell<Box<Option<crate::Context>>>,
+    log_path: Option<String>,
+    stdout: bool,
 }
 
 thread_local! {
     static OBSERVER: std::cell::RefCell<Option<Observer>> = std::cell::RefCell::new(None);
 }
 
-pub fn create_observer(backends: Vec<Box<dyn Backend>>) {
-    OBSERVER.with(|observer| {
-        let mut observer = observer.borrow_mut();
-        observer.replace(Observer::new(backends))
-    });
+pub fn builder(backend: Box<dyn Backend>) -> Observer {
+    Observer::builder(backend)
 }
+
+//pub fn create_observer(backends: Vec<Box<dyn Backend>>) {
+//    OBSERVER.with(|observer| {
+//        let mut observer = observer.borrow_mut();
+//        observer.replace(Observer::new(backends))
+//    });
+//}
 
 pub fn create_context(context_id: &str) {
     OBSERVER.with(|observer| {
@@ -140,15 +146,50 @@ pub(crate) fn observe_span_id(id: &str) {
 impl Observer {
     /// Initialized Observer with different backends(NewRelic, StatsD, Sentry, Jaeger, etc...)
     /// and call their app started method
-    pub fn new(backends: Vec<Box<dyn Backend>>) -> Self {
-        for backend in backends.iter() {
-            backend.app_started()
-        }
+
+    pub fn builder(backend: Box<dyn Backend>) -> Self {
         Observer {
-            backends,
+            backends: vec![backend],
             context: std::cell::RefCell::new(Box::new(None)),
+            log_path: None,
+            stdout: false,
         }
     }
+
+    pub fn with_file(mut self, path: &str) -> Self {
+        self.log_path = Some(path.to_string());
+        self
+    }
+
+    pub fn with_stdout(mut self) -> Self {
+        self.stdout = true;
+        self
+    }
+
+    pub fn build(self) {
+        for backend in self.backends.iter() {
+            backend.app_started()
+        }
+
+        OBSERVER.with(|observer| {
+            let mut observer = observer.borrow_mut();
+            observer.replace(self)
+        });
+    }
+
+//    pub fn new(backends: Vec<Box<dyn Backend>>) -> Self {
+//        for backend in backends.iter() {
+//            backend.app_started()
+//        }
+//        Observer {
+//            backends,
+//            context: std::cell::RefCell::new(Box::new(None)),
+//            log_path: None,
+//            stdout: false,
+//        }
+//    }
+
+
     /// It will iterate through all backends and call their context_created method.
     pub(crate) fn create_context(&self, context_id: &str) {
         let mut context = self.context.borrow_mut();
@@ -163,7 +204,7 @@ impl Observer {
     /// It will end context object and drop things if needed.
     pub(crate) fn end_context(&self) {
         if let Some(ctx) = self.context.borrow().as_ref() {
-            let _ = ctx.finalise();
+            let _ = ctx.finalise(self.stdout, );
         }
         for backend in self.backends.iter() {
             backend.context_ended();

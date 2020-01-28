@@ -131,10 +131,9 @@ impl Context {
         }
     }
 
-    pub fn finalise(&self) -> Result<()> {
+    pub fn finalise(&self, is_stdout: bool) -> Result<()> {
         self.end_ctx_frame();
-        if true {
-            // println!("{:#?}", self.span_stack);
+        if is_stdout {
             print_context(&self);
         } else {
             if is_ctx_dir_exists() {
@@ -212,12 +211,11 @@ pub(crate) fn print_span(writer: &mut String, spans: &Vec<Span>, space: usize) {
         if span.logs.len() > 0 {
             writer.push_str(&format!("{:>space$}logs:\n", "", space = space + SPACE));
             for log in span.logs.iter() {
-                let dur = span
-                    .start_time
-                    .signed_duration_since(log.0)
+                let dur = log.0
+                    .signed_duration_since(span.start_time)
                     .num_milliseconds();
                 writer.push_str(&format!(
-                    "{:>space$} {}ms: {log}\n",
+                    "{:>space$} - {}ms: {log}\n",
                     "",
                     dur,
                     log = log.1,
