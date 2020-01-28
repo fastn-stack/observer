@@ -9,6 +9,7 @@ extern crate ackorelic;
 extern crate diesel;
 
 pub mod db_test;
+pub mod mysql_test;
 pub mod policy;
 pub mod tables;
 pub mod user_id;
