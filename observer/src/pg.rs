@@ -73,10 +73,10 @@ impl diesel::connection::Connection for OConnection {
     #[observed(namespace = "observer__pg")]
     fn execute(&self, query: &str) -> QueryResult<usize> {
         let (operation, table) = crate::sql_parse::parse_sql(&query);
-        crate::observe_fields::observe_string("query", &query);
+        crate::observe_fields::observe_string("query", &&query.replace("\"", ""));
         crate::observe_span_id(&format!("db__{}__{}", operation, table.replace("\"", "")));
         let r = self.conn.execute(query);
-        eprintln!("ExecuteQuery: {}", query);
+        // eprintln!("ExecuteQuery: {}", query);
         r
     }
 
@@ -93,10 +93,10 @@ impl diesel::connection::Connection for OConnection {
 
         let debug_query = diesel::debug_query(&query).to_string();
         let (operation, table) = crate::sql_parse::parse_sql(&debug_query);
-        crate::observe_fields::observe_string("query", &debug_query);
+        crate::observe_fields::observe_string("query", &debug_query.replace("\"", ""));
         crate::observe_span_id(&format!("db__{}__{}", operation, table.replace("\"", "")));
         let r = self.conn.query_by_index(query);
-        eprintln!("QueryByIndex: {}", debug_query.as_str());
+        // eprintln!("QueryByIndex: {}", debug_query.as_str());
         r
     }
 
@@ -112,10 +112,10 @@ impl diesel::connection::Connection for OConnection {
             qb.finish()
         };
         let (operation, table) = crate::sql_parse::parse_sql(&query);
-        crate::observe_fields::observe_string("query", &query);
+        crate::observe_fields::observe_string("query",  &query.replace("\"", ""));
         crate::observe_span_id(&format!("db__{}__{}", operation, table.replace("\"", "")));
         let r = self.conn.query_by_name(source);
-        eprintln!("QueryByName: {}", query.as_str());
+        // eprintln!("QueryByName: {}", query.as_str());
         r
     }
 
@@ -130,10 +130,10 @@ impl diesel::connection::Connection for OConnection {
             qb.finish()
         };
         let (operation, table) = crate::sql_parse::parse_sql(&query);
-        crate::observe_fields::observe_string("query", &query);
+        crate::observe_fields::observe_string("query", &query.replace("\"", ""));
         crate::observe_span_id(&format!("db__{}__{}", operation, table.replace("\"", "")));
         let r = self.conn.execute_returning_count(source);
-        eprintln!("ExecuteReturningCount: {}", query.as_str());
+        // eprintln!("ExecuteReturningCount: {}", query.as_str());
         r
     }
 

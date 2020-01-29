@@ -71,7 +71,7 @@ impl crate::Backend for Logger {
         // self.handle_log("logger_ended");
     }
 
-    fn context_created(&self, id: &str) {
+    fn context_created(&self, _id: &str) {
         // self.handle_log(&format!("context_created with id: {}", id));
     }
 
