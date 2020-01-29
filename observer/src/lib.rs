@@ -8,8 +8,8 @@ extern crate failure;
 #[macro_use]
 extern crate observer_attribute;
 
+pub mod backends;
 pub mod context;
-mod event;
 #[cfg(feature = "mysql")]
 pub mod mysql;
 pub mod observe;
@@ -20,13 +20,9 @@ pub mod pg;
 pub mod prelude;
 mod span;
 mod sql_parse;
-mod utils;
 pub use crate::context::Context;
-pub use crate::event::{Event, OEvent, OID};
-use std::env;
 #[macro_use]
 extern crate log;
-extern crate log4rs;
 
 #[cfg(test)]
 mod tests;
@@ -45,8 +41,6 @@ pub trait Backend {
 pub struct Observer {
     backends: Vec<Box<dyn Backend>>,
     context: std::cell::RefCell<Box<Option<crate::Context>>>,
-    log_path: Option<String>,
-    stdout: bool,
 }
 
 thread_local! {
@@ -154,24 +148,11 @@ impl Observer {
         Observer {
             backends: vec![backend],
             context: std::cell::RefCell::new(Box::new(None)),
-            log_path: None,
-            stdout: false,
         }
-    }
-
-    pub fn with_file(mut self, path: &str) -> Self {
-        utils::logging(path);
-        self.log_path = Some(path.to_string());
-        self
     }
 
     pub fn add_backend(mut self, backend: Box<dyn Backend>) -> Self {
         self.backends.push(backend);
-        self
-    }
-
-    pub fn with_stdout(mut self) -> Self {
-        self.stdout = true;
         self
     }
 
@@ -212,7 +193,7 @@ impl Observer {
     /// It will end context object and drop things if needed.
     pub(crate) fn end_context(&self) {
         if let Some(ctx) = self.context.borrow().as_ref() {
-            let _ = ctx.finalise(self.stdout, self.log_path.is_some());
+            let _ = ctx.finalise(true, true);
         }
         for backend in self.backends.iter() {
             backend.context_ended();
@@ -240,46 +221,5 @@ impl Observer {
         if let Some(ctx) = self.context.borrow().as_ref() {
             ctx.span_log(value);
         }
-    }
-}
-
-lazy_static! {
-    static ref LOG_DIR: String =
-        env::var("OBSERVER_LOGS").unwrap_or_else(|_| "/var/log/".to_string());
-}
-
-pub fn check_path() -> String {
-    format!("OBSERVER LOGDIR {:?}", LOG_DIR.to_string())
-}
-
-#[cfg(test)]
-pub mod test_newrelic {
-    use ackorelic::{
-        newrelic_fn::{
-            nr_end_custom_segment, nr_end_transaction, nr_start_custom_segment,
-            nr_start_web_transaction,
-        },
-        App, NewRelicConfig,
-    };
-    use std::thread;
-    use std::time::Duration;
-
-    #[test]
-    fn test_log_path() {
-        println!("LOGDIR {:?}", super::check_path());
-    }
-
-    #[test]
-    fn new_relic_test() {
-        let mut count = 0;
-        nr_start_web_transaction("test_transaction");
-        while count < 1000 {
-            let seg1 = nr_start_custom_segment("db_pool");
-            thread::sleep(Duration::from_millis(10));
-            nr_end_custom_segment(seg1);
-            count += 1;
-        }
-        println!("Events Completed");
-        nr_end_transaction()
     }
 }

@@ -170,7 +170,6 @@ pub(crate) fn print_span(writer: &mut String, spans: &Vec<Span>, space: usize) {
                 ));
             }
         }
-
         print_span(writer, &span.sub_frames, space + SPACE);
     }
 }
