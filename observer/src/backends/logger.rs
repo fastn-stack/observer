@@ -146,6 +146,15 @@ pub(crate) fn print_span(writer: &mut String, spans: &Vec<crate::span::Span>, sp
                 space = space + SPACE
             ));
         }
+        if let Some(result) = &span.result {
+            writer.push_str(&format!(
+                "{:>space$}#result: {}\n",
+                "",
+                result,
+                space = space + SPACE
+            ));
+        }
+
         if span.logs.len() > 0 {
             writer.push_str(&format!("{:>space$}logs:\n", "", space = space + SPACE));
             for log in span.logs.iter() {
