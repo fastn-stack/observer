@@ -3,7 +3,7 @@
 ** Observer is a library to capture observability of rust servers
 
 ## Observer 0.2 in action
-To use observer 2.0
+To use observer 0.2
 1. Add dependency into `Cargo.toml`.
 ```toml
 observer = "0.2.1"
