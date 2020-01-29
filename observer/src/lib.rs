@@ -156,7 +156,7 @@ impl Observer {
         self
     }
 
-    pub fn build(self) {
+    pub fn init(self) {
         for backend in self.backends.iter() {
             backend.app_started()
         }

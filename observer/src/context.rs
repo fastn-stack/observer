@@ -82,7 +82,7 @@ impl Context {
         }
     }
 
-    pub fn finalise(&self, is_stdout: bool, is_file_log: bool) {
+    pub fn finalise(&self) {
         self.end_ctx_frame();
     }
 
