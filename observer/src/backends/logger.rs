@@ -62,20 +62,37 @@ impl Logger {
 }
 
 impl crate::Backend for Logger {
-    fn app_started(&self) {}
-    fn app_ended(&self) {}
-    fn context_created(&self, _id: &str) {}
+    fn app_started(&self) {
+        self.handle_log("ObserverLogger: App Started");
+    }
+
+    fn app_ended(&self) {
+        self.handle_log("ObserverLogger: App Ended");
+    }
+    fn context_created(&self, id: &str) {
+        self.handle_log(&format!("ObserverLogger: Context created with id: {}", id));
+    }
+
     fn context_ended(&self, ctx: &crate::Context) {
         let log = if self.stdout || self.path.is_some() {
             print_context(ctx)
         } else {
             "".to_string()
         };
+        self.handle_log(&format!(
+            "ObserverLogger: Context ended with id: {}",
+            ctx.id()
+        ));
         self.handle_log(&log);
     }
-    fn span_created(&self, _id: &str) {}
+
+    fn span_created(&self, id: &str) {
+        self.handle_log(&format!("ObserverLogger: Span created with id: {}", id));
+    }
     fn span_data(&self, _key: &str, _value: &str) {}
-    fn span_ended(&self) {}
+    fn span_ended(&self) {
+        self.handle_log(&format!("ObserverLogger: Span ended"));
+    }
 }
 
 pub(crate) fn print_context(ctx: &crate::Context) -> String {
