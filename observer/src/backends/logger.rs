@@ -1,7 +1,7 @@
 use crate::Backend;
 
 pub struct Logger {
-    file_path: Option<String>,
+    path: Option<String>,
     stdout: bool,
     stderr: bool,
 }
@@ -9,7 +9,7 @@ pub struct Logger {
 impl Logger {
     pub fn builder() -> Self {
         Logger {
-            file_path: None,
+            path: None,
             stdout: false,
             stderr: false,
         }
@@ -26,10 +26,7 @@ impl Logger {
     }
 
     pub fn build(self) -> Self {
-        let path = self
-            .file_path
-            .as_ref()
-            .expect("Logger file path is provided");
+        let path = self.path.as_ref().expect("Logger file path is provided");
         let requests = log4rs::append::file::FileAppender::builder()
             .encoder(Box::new(log4rs::encode::pattern::PatternEncoder::new(
                 "{d} - {m}{n}",
