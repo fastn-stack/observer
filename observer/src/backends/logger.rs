@@ -68,11 +68,11 @@ impl crate::Backend for Logger {
     }
 
     fn app_ended(&self) {
-        self.handle_log("logger_ended");
+        // self.handle_log("logger_ended");
     }
 
     fn context_created(&self, id: &str) {
-        self.handle_log(&format!("context_created with id: {}", id));
+        // self.handle_log(&format!("context_created with id: {}", id));
     }
 
     fn context_ended(&self, ctx: &crate::Context) {
@@ -81,18 +81,17 @@ impl crate::Backend for Logger {
         } else {
             "".to_string()
         };
-        self.handle_log(&format!("context_ended with id: {}", ctx.id()));
         self.handle_log(&log);
     }
 
-    fn span_created(&self, id: &str) {
-        self.handle_log(&format!("span_created with id: {}", id));
+    fn span_created(&self, _id: &str) {
+        // self.handle_log(&format!("span_created with id: {}", id));
     }
     fn span_data(&self, _key: &str, _value: &str) {}
-    fn span_ended(&self, span: Option<&crate::span::Span>) {
-        if let Some(span) = span {
-            self.handle_log(&format!("span_ended with id: {}", span.id));
-        }
+    fn span_ended(&self, _span: Option<&crate::span::Span>) {
+        //        if let Some(span) = span {
+        //            self.handle_log(&format!("span_ended with id: {}", span.id));
+        //        }
     }
 }
 
