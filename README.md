@@ -75,9 +75,8 @@ fn main(){
             .build();
 
     // Initialize observer with logger
-    observer::builder(Box::new(logger))
-            .create_context("main")
-            .init();
+    observer::builder(Box::new(logger)).init();
+    observer::create_context("main");
     
     // Call your functions
     let _result = create_temp("temp");
