@@ -30,24 +30,25 @@ impl Logger {
     }
 
     pub fn build(self) -> Self {
-        let path = self.path.as_ref().expect("Logger file path is provided");
-        let requests = log4rs::append::file::FileAppender::builder()
-            .encoder(Box::new(log4rs::encode::pattern::PatternEncoder::new(
-                "ObserverLogger: {d} - {m}{n}",
-            )))
-            .append(true)
-            .build(path)
-            .expect("Failed to create file appender");
+        if let Some(path) = &self.path {
+            let requests = log4rs::append::file::FileAppender::builder()
+                .encoder(Box::new(log4rs::encode::pattern::PatternEncoder::new(
+                    "{d} - {m}{n}",
+                )))
+                .append(true)
+                .build(path)
+                .expect("Failed to create file appender");
 
-        let config = log4rs::config::Config::builder()
-            .appender(log4rs::config::Appender::builder().build("requests", Box::new(requests)))
-            .build(
-                log4rs::config::Root::builder()
-                    .appender("requests")
-                    .build(log::LevelFilter::Info),
-            )
-            .unwrap();
-        log4rs::init_config(config).expect("Failed to create logging builder");
+            let config = log4rs::config::Config::builder()
+                .appender(log4rs::config::Appender::builder().build("requests", Box::new(requests)))
+                .build(
+                    log4rs::config::Root::builder()
+                        .appender("requests")
+                        .build(log::LevelFilter::Info),
+                )
+                .unwrap();
+            log4rs::init_config(config).expect("Failed to create logging builder");
+        }
         self
     }
 

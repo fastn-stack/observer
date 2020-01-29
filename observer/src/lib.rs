@@ -217,7 +217,7 @@ impl Observer {
         if let Some(ctx) = self.context.borrow().as_ref() {
             ctx.end_span(is_critical, err);
             for backend in self.backends.iter() {
-                backend.span_ended(ctx.span_stack.borrow().get(0));
+                backend.span_ended(ctx.span_stack.borrow().last());
             }
         }
     }
