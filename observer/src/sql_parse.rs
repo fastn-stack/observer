@@ -22,12 +22,14 @@ impl Dialect for ObserverPostgresSqlDialect {
     }
 }
 
+#[allow(dead_code)]
 fn split_query_by_where(query: &str) -> String {
     let query = query.to_lowercase();
     let sql: Vec<&str> = query.split("where").collect::<Vec<&str>>();
     sql.first().unwrap_or(&query.as_str()).to_string()
 }
 
+#[allow(dead_code)]
 pub fn parse_sql(sql: &str) -> (String, String) {
     match Parser::parse_sql(&ObserverPostgresSqlDialect {}, split_query_by_where(sql)) {
         Ok(ast) => {

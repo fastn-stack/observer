@@ -2,9 +2,11 @@
 extern crate serde_derive;
 #[macro_use]
 extern crate serde_json;
+#[allow(unused_imports)]
 #[macro_use]
 extern crate lazy_static;
 extern crate failure;
+#[allow(unused_imports)]
 #[macro_use]
 extern crate observer_attribute;
 
@@ -129,6 +131,7 @@ pub(crate) fn observe_result(result: impl serde::Serialize) {
     });
 }
 
+#[allow(dead_code)]
 pub(crate) fn observe_span_id(id: &str) {
     OBSERVER.with(|observer| {
         if let Some(obj) = observer.borrow().as_ref() {

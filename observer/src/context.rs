@@ -29,6 +29,7 @@ impl Context {
         self.span_stack.borrow_mut().push(Span::new(id));
     }
 
+    #[allow(dead_code)]
     pub(crate) fn observe_span_id(&self, id: &str) {
         let frame = self.span_stack.borrow_mut().pop();
         if let Some(mut frame) = frame {
