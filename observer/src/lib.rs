@@ -32,7 +32,7 @@ pub trait Backend {
     fn app_started(&self);
     fn app_ended(&self);
     fn context_created(&self, id: &str);
-    fn context_ended(&self);
+    fn context_ended(&self, ctx: &crate::Context);
     fn span_created(&self, id: &str);
     fn span_data(&self, key: &str, value: &str);
     fn span_ended(&self);
@@ -194,9 +194,9 @@ impl Observer {
     pub(crate) fn end_context(&self) {
         if let Some(ctx) = self.context.borrow().as_ref() {
             let _ = ctx.finalise(true, true);
-        }
-        for backend in self.backends.iter() {
-            backend.context_ended();
+            for backend in self.backends.iter() {
+                backend.context_ended(&ctx);
+            }
         }
     }
 
@@ -208,6 +208,7 @@ impl Observer {
             backend.span_created(id);
         }
     }
+
     pub(crate) fn end_span(&self, is_critical: bool, err: Option<String>) {
         if let Some(ctx) = self.context.borrow().as_ref() {
             ctx.end_span(is_critical, err);

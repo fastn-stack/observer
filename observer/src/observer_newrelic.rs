@@ -23,7 +23,7 @@ impl crate::Backend for ObserverNewRelic {
         println!("ObserverNewRelic: Context Started: {}", id);
     }
     /// This method will be called when context ended.
-    fn context_ended(&self) {
+    fn context_ended(&self, ctx: &crate::Context) {
         // Need to end web transaction
         // ackorelic::newrelic_fn::nr_end_transaction()
         println!("ObserverNewRelic: Context Ended")

@@ -1,8 +1,6 @@
 use crate::span::Span;
 use serde_derive::{Deserialize, Serialize};
 
-pub static mut DIR_EXISTS: bool = false;
-pub static mut CON_DIR_EXISTS: bool = false;
 static SPACE: usize = 4;
 
 #[derive(Debug, Serialize, Deserialize)]
