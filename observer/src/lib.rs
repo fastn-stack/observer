@@ -17,7 +17,7 @@ pub mod observe_fields;
 #[cfg(feature = "postgres")]
 pub mod pg;
 pub mod prelude;
-mod span;
+pub mod span;
 mod sql_parse;
 pub use crate::context::Context;
 #[macro_use]
@@ -34,7 +34,7 @@ pub trait Backend {
     fn context_ended(&self, ctx: &crate::Context);
     fn span_created(&self, id: &str);
     fn span_data(&self, key: &str, value: &str);
-    fn span_ended(&self);
+    fn span_ended(&self, span: Option<&crate::span::Span>);
 }
 
 pub struct Observer {
@@ -216,9 +216,9 @@ impl Observer {
     pub(crate) fn end_span(&self, is_critical: bool, err: Option<String>) {
         if let Some(ctx) = self.context.borrow().as_ref() {
             ctx.end_span(is_critical, err);
-        }
-        for backend in self.backends.iter() {
-            backend.span_ended();
+            for backend in self.backends.iter() {
+                backend.span_ended(ctx.span_stack.borrow().get(0));
+            }
         }
     }
 

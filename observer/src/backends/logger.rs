@@ -33,7 +33,7 @@ impl Logger {
         let path = self.path.as_ref().expect("Logger file path is provided");
         let requests = log4rs::append::file::FileAppender::builder()
             .encoder(Box::new(log4rs::encode::pattern::PatternEncoder::new(
-                "{d} - {m}{n}",
+                "ObserverLogger: {d} - {m}{n}",
             )))
             .append(true)
             .build(path)
@@ -63,14 +63,15 @@ impl Logger {
 
 impl crate::Backend for Logger {
     fn app_started(&self) {
-        self.handle_log("ObserverLogger: App Started");
+        self.handle_log("logger_initialized");
     }
 
     fn app_ended(&self) {
-        self.handle_log("ObserverLogger: App Ended");
+        self.handle_log("logger_ended");
     }
+
     fn context_created(&self, id: &str) {
-        self.handle_log(&format!("ObserverLogger: Context created with id: {}", id));
+        self.handle_log(&format!("context_created with id: {}", id));
     }
 
     fn context_ended(&self, ctx: &crate::Context) {
@@ -79,19 +80,18 @@ impl crate::Backend for Logger {
         } else {
             "".to_string()
         };
-        self.handle_log(&format!(
-            "ObserverLogger: Context ended with id: {}",
-            ctx.id()
-        ));
+        self.handle_log(&format!("context_ended with id: {}", ctx.id()));
         self.handle_log(&log);
     }
 
     fn span_created(&self, id: &str) {
-        self.handle_log(&format!("ObserverLogger: Span created with id: {}", id));
+        self.handle_log(&format!("span_created with id: {}", id));
     }
     fn span_data(&self, _key: &str, _value: &str) {}
-    fn span_ended(&self) {
-        self.handle_log(&format!("ObserverLogger: Span ended"));
+    fn span_ended(&self, span: Option<&crate::span::Span>) {
+        if let Some(span) = span {
+            self.handle_log(&format!("span_ended with id: {}", span.id));
+        }
     }
 }
 

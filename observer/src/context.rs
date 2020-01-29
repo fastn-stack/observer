@@ -24,6 +24,7 @@ impl Context {
     pub fn id(&self) -> String {
         self.id.to_string()
     }
+
     pub fn start_span(&self, id: &str) {
         self.span_stack.borrow_mut().push(Span::new(id));
     }
