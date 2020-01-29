@@ -24,6 +24,9 @@ mod utils;
 pub use crate::context::Context;
 pub use crate::event::{Event, OEvent, OID};
 use std::env;
+#[macro_use]
+extern crate log;
+extern crate log4rs;
 
 #[cfg(test)]
 mod tests;
@@ -157,7 +160,13 @@ impl Observer {
     }
 
     pub fn with_file(mut self, path: &str) -> Self {
+        utils::logging(path);
         self.log_path = Some(path.to_string());
+        self
+    }
+
+    pub fn add_backend(mut self, backend: Box<dyn Backend>) -> Self {
+        self.backends.push(backend);
         self
     }
 
@@ -177,18 +186,17 @@ impl Observer {
         });
     }
 
-//    pub fn new(backends: Vec<Box<dyn Backend>>) -> Self {
-//        for backend in backends.iter() {
-//            backend.app_started()
-//        }
-//        Observer {
-//            backends,
-//            context: std::cell::RefCell::new(Box::new(None)),
-//            log_path: None,
-//            stdout: false,
-//        }
-//    }
-
+    //    pub fn new(backends: Vec<Box<dyn Backend>>) -> Self {
+    //        for backend in backends.iter() {
+    //            backend.app_started()
+    //        }
+    //        Observer {
+    //            backends,
+    //            context: std::cell::RefCell::new(Box::new(None)),
+    //            log_path: None,
+    //            stdout: false,
+    //        }
+    //    }
 
     /// It will iterate through all backends and call their context_created method.
     pub(crate) fn create_context(&self, context_id: &str) {
@@ -204,7 +212,7 @@ impl Observer {
     /// It will end context object and drop things if needed.
     pub(crate) fn end_context(&self) {
         if let Some(ctx) = self.context.borrow().as_ref() {
-            let _ = ctx.finalise(self.stdout, );
+            let _ = ctx.finalise(self.stdout, self.log_path.is_some());
         }
         for backend in self.backends.iter() {
             backend.context_ended();

@@ -1,9 +1,6 @@
-use crate::context::{is_log_dir_exists, LOG_DIR};
-use crate::utils;
 use chrono::prelude::*;
 use std::collections::HashMap;
 use std::fmt::{self, Debug};
-use std::io::Write;
 
 #[derive(Serialize, Deserialize)]
 pub struct Span {
@@ -96,26 +93,6 @@ impl Span {
 
     pub fn add_logs(&mut self, log: &str) {
         self.logs.push((Utc::now(), log.to_string()))
-    }
-
-    pub fn save_on_local(&self) {
-        if is_log_dir_exists() {
-            let path = LOG_DIR.to_owned() + self.id.as_str();
-            if let Err(err) = utils::create_dir_if_not_exists(&path) {
-                println!("Not able to create log_dir path: {}, {:?}", path, err);
-                return;
-            }
-            match utils::create_file(&path, self.key.as_str()) {
-                Ok(mut file) => {
-                    if let Err(err) = file.write(json!(self).to_string().as_bytes()) {
-                        println!("Frame write error {:#?}", err);
-                    };
-                }
-                Err(err) => {
-                    println!("Frame file create error {:#?}", err);
-                }
-            };
-        }
     }
 
     //adding breadcrumbs

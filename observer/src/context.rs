@@ -1,57 +1,9 @@
-use crate::{span::Span, utils, Result};
+use crate::span::Span;
 use serde_derive::{Deserialize, Serialize};
-use std::io::Write;
 
 pub static mut DIR_EXISTS: bool = false;
 pub static mut CON_DIR_EXISTS: bool = false;
 static SPACE: usize = 4;
-
-lazy_static! {
-    pub static ref LOG_DIR: String = {
-        let log_dir = format!(
-            "{}/{}",
-            std::env::var("LOG_DIR").unwrap_or_else(|_| "/var/log".to_owned()),
-            "observer/"
-        );
-        match utils::create_dir_all_if_not_exists(&log_dir) {
-            Ok(_) => {
-                // println!("Observer LOG_DIR :: {}", log_dir);
-                unsafe { DIR_EXISTS = true }
-            }
-            Err(err) => {
-                println!("Not able to create/find dir LOG_DIR :: {}", log_dir);
-                println!("Make sure it will not be able to store logs at local");
-                println!("Err is {:?}", err);
-            }
-        }
-        log_dir
-    };
-    pub static ref CONTEXT_DIR: String = {
-        let context_dir = format!("{}{}/", LOG_DIR.to_string(), "context");
-        match utils::create_dir_all_if_not_exists(&context_dir) {
-            Ok(_) => {
-                // println!("Context LOG_DIR :: {}", context_dir);
-                unsafe { CON_DIR_EXISTS = true }
-            }
-            Err(err) => {
-                println!("Not able to create/find dir CONTEXT_DIR :: {}", context_dir);
-                println!("Make sure it will not be able to store logs at local");
-                println!("Err is {:?}", err);
-            }
-        }
-        context_dir
-    };
-}
-
-pub fn is_log_dir_exists() -> bool {
-    let _ = LOG_DIR.to_string();
-    unsafe { DIR_EXISTS }
-}
-
-pub fn is_ctx_dir_exists() -> bool {
-    let _ = CONTEXT_DIR.to_string();
-    unsafe { CON_DIR_EXISTS }
-}
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Context {
@@ -131,25 +83,19 @@ impl Context {
         }
     }
 
-    pub fn finalise(&self, is_stdout: bool) -> Result<()> {
+    pub fn finalise(&self, is_stdout: bool, is_file_log: bool) {
         self.end_ctx_frame();
-        if is_stdout {
-            print_context(&self);
+        let log = if is_stdout || is_file_log {
+            print_context(&self)
         } else {
-            if is_ctx_dir_exists() {
-                match utils::create_file(&CONTEXT_DIR, self.key.as_str()) {
-                    Ok(mut file) => {
-                        if let Err(err) = file.write(json!(self).to_string().as_bytes()) {
-                            println!("Context file write error :: {:#?}", err);
-                        };
-                    }
-                    Err(err) => {
-                        println!("Context file create error {:#?}", err);
-                    }
-                };
-            }
+            "".to_string()
+        };
+        if is_file_log {
+            info!("{}", log);
         }
-        Ok(())
+        if is_stdout {
+            println!("{}", log);
+        }
     }
 
     pub fn get_key(&self) -> String {
@@ -157,7 +103,7 @@ impl Context {
     }
 }
 
-pub(crate) fn print_context(ctx: &Context) {
+pub(crate) fn print_context(ctx: &Context) -> String {
     let mut writer = "".to_string();
     let frame = ctx.span_stack.borrow();
     if let Some(frame) = frame.first() {
@@ -174,7 +120,7 @@ pub(crate) fn print_context(ctx: &Context) {
         ));
         print_span(&mut writer, &frame.sub_frames, SPACE);
     }
-    println!("{}", writer);
+    writer
 }
 
 pub(crate) fn print_span(writer: &mut String, spans: &Vec<Span>, space: usize) {
@@ -211,7 +157,8 @@ pub(crate) fn print_span(writer: &mut String, spans: &Vec<Span>, space: usize) {
         if span.logs.len() > 0 {
             writer.push_str(&format!("{:>space$}logs:\n", "", space = space + SPACE));
             for log in span.logs.iter() {
-                let dur = log.0
+                let dur = log
+                    .0
                     .signed_duration_since(span.start_time)
                     .num_milliseconds();
                 writer.push_str(&format!(
