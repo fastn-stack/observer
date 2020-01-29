@@ -112,7 +112,7 @@ impl diesel::connection::Connection for OConnection {
             qb.finish()
         };
         let (operation, table) = crate::sql_parse::parse_sql(&query);
-        crate::observe_fields::observe_string("query",  &query.replace("\"", ""));
+        crate::observe_fields::observe_string("query", &query.replace("\"", ""));
         crate::observe_span_id(&format!("db__{}__{}", operation, table.replace("\"", "")));
         let r = self.conn.query_by_name(source);
         // eprintln!("QueryByName: {}", query.as_str());
