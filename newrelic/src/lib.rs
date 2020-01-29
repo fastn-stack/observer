@@ -1,17 +1,17 @@
 pub struct ObserverNewRelic {
-    segment_stack: std::cell::RefCell<Vec<ackorelic::acko_segment::Segment>>,
+    _segment_stack: std::cell::RefCell<Vec<ackorelic::acko_segment::Segment>>,
 }
 
 impl ObserverNewRelic {
     pub fn new() -> Self {
         ObserverNewRelic {
-            segment_stack: std::cell::RefCell::new(vec![]),
+            _segment_stack: std::cell::RefCell::new(vec![]),
         }
     }
 }
-/// Implementation of Backend trait for NewRelic
 
-impl crate::Backend for ObserverNewRelic {
+/// Implementation of Backend trait for NewRelic
+impl observer::Backend for ObserverNewRelic {
     /// This will start NewRelic app
     fn app_started(&self) {}
     /// This will end NewRelic app
@@ -23,7 +23,7 @@ impl crate::Backend for ObserverNewRelic {
         println!("ObserverNewRelic: Context Started: {}", id);
     }
     /// This method will be called when context ended.
-    fn context_ended(&self, ctx: &crate::Context) {
+    fn context_ended(&self, _ctx: &observer::Context) {
         // Need to end web transaction
         // ackorelic::newrelic_fn::nr_end_transaction()
         println!("ObserverNewRelic: Context Ended")
@@ -46,8 +46,4 @@ impl crate::Backend for ObserverNewRelic {
         //        }
         println!("ObserverNewRelic: Span Ended")
     }
-}
-
-fn _test() {
-    // let _t: Box<dyn crate::Backend> = Box::new(ObserverNewRelic::new());
 }

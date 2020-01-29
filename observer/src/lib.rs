@@ -14,7 +14,6 @@ pub mod context;
 pub mod mysql;
 pub mod observe;
 pub mod observe_fields;
-pub mod observer_newrelic;
 #[cfg(feature = "postgres")]
 pub mod pg;
 pub mod prelude;
@@ -193,7 +192,7 @@ impl Observer {
     /// It will end context object and drop things if needed.
     pub(crate) fn end_context(&self) {
         if let Some(ctx) = self.context.borrow().as_ref() {
-            let _ = ctx.finalise(true, true);
+            let _ = ctx.finalise();
             for backend in self.backends.iter() {
                 backend.context_ended(&ctx);
             }

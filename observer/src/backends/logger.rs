@@ -1,4 +1,3 @@
-
 static SPACE: usize = 4;
 pub struct Logger {
     path: Option<String>,
@@ -65,7 +64,7 @@ impl Logger {
 impl crate::Backend for Logger {
     fn app_started(&self) {}
     fn app_ended(&self) {}
-    fn context_created(&self, id: &str) {}
+    fn context_created(&self, _id: &str) {}
     fn context_ended(&self, ctx: &crate::Context) {
         let log = if self.stdout || self.path.is_some() {
             print_context(ctx)
@@ -74,11 +73,10 @@ impl crate::Backend for Logger {
         };
         self.handle_log(&log);
     }
-    fn span_created(&self, id: &str) {}
-    fn span_data(&self, key: &str, value: &str) {}
+    fn span_created(&self, _id: &str) {}
+    fn span_data(&self, _key: &str, _value: &str) {}
     fn span_ended(&self) {}
 }
-
 
 pub(crate) fn print_context(ctx: &crate::Context) -> String {
     let mut writer = "".to_string();
