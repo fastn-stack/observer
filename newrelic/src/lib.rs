@@ -1,17 +1,17 @@
 pub struct ObserverNewRelic {
-    segment_stack: std::cell::RefCell<Vec<ackorelic::acko_segment::Segment>>,
+    _segment_stack: std::cell::RefCell<Vec<ackorelic::acko_segment::Segment>>,
 }
 
 impl ObserverNewRelic {
     pub fn new() -> Self {
         ObserverNewRelic {
-            segment_stack: std::cell::RefCell::new(vec![]),
+            _segment_stack: std::cell::RefCell::new(vec![]),
         }
     }
 }
-/// Implementation of Backend trait for NewRelic
 
-impl crate::Backend for ObserverNewRelic {
+/// Implementation of Backend trait for NewRelic
+impl observer::Backend for ObserverNewRelic {
     /// This will start NewRelic app
     fn app_started(&self) {}
     /// This will end NewRelic app
@@ -23,7 +23,7 @@ impl crate::Backend for ObserverNewRelic {
         println!("ObserverNewRelic: Context Started: {}", id);
     }
     /// This method will be called when context ended.
-    fn context_ended(&self) {
+    fn context_ended(&self, _ctx: &observer::Context) {
         // Need to end web transaction
         // ackorelic::newrelic_fn::nr_end_transaction()
         println!("ObserverNewRelic: Context Ended")
@@ -39,15 +39,11 @@ impl crate::Backend for ObserverNewRelic {
     /// This method will be when span needs to logged.
     fn span_data(&self, _key: &str, _value: &str) {}
     /// This method will be when span ended.
-    fn span_ended(&self) {
+    fn span_ended(&self, _span: Option<&observer::span::Span>) {
         // Needs to end a segment which was stored earlier in stack
         //        if let Some(segment) = self.segment_stack.borrow_mut().pop() {
         //            ackorelic::newrelic_fn::nr_end_custom_segment(segment);
         //        }
         println!("ObserverNewRelic: Span Ended")
     }
-}
-
-fn _test() {
-    // let _t: Box<dyn crate::Backend> = Box::new(ObserverNewRelic::new());
 }

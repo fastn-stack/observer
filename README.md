@@ -2,7 +2,126 @@
 
 ** Observer is a library to capture observability of rust servers
 
-## Observer in action
+## Observer 2.0 in action
+To use observer 2.0
+1. Add dependency into `Cargo.toml`.
+```toml
+observer = "0.2.0"
+observer_attribute = "0.1.6"
+```
+2. import these dependency into `lib.rs`. 
+```rust
+extern crate observer;
+#[macro_use]
+extern crate observer_attribute;
+``` 
+3. Define event json file and export events path as EVENTS_PATH.
+```shell script
+export EVENTS_PATH="<Path of events.json file>"
+```
+
+event.json file
+
+```json
+{
+    "foo__create_temp" : {
+      "critical" : true,
+      "result_type": "list",
+      "fields" : {
+        "id" : "string"
+      }
+    },
+    "update_temp" : {
+      "critical" : false,
+      "result_type": "i32",
+      "fields" : {
+        "id" : "string"
+      }
+    }
+}
+```
+
+4. Use observer into your project
+
+```rust
+// Here namespace and with_result are optional parameter.
+// If define namespace so in event file needs to define `foo__create_policy`
+// If with_result defined so it log error also, if function returns an error.
+use observer::prelude::*;
+use observer::Result;
+
+pub struct Temp; 
+
+#[observed(with_result)]
+pub fn update_temp(id: &str) -> observer::Result<Temp> {
+    observe_field("id", id); // Need to tell type of id's value in event.json
+    observe_result(2314);  // Need to tell type of result in event.json
+    observer::observe_span_log("Message from update temp");
+    Ok(Temp)
+}
+
+#[observed(namespace = "foo")]
+pub fn create_temp(id: &str) -> observer::Result<Temp> {
+    observe_field("id", "4839");
+    observe_result(&vec![1,2,3,4]);
+    update_temp(id)
+}
+
+fn main(){
+    // define logger
+    let logger = observer::backends::logger::Logger::builder()
+            .with_path("/tmp/observer.log")
+            .with_stdout()
+            .build();
+
+    // Initialize observer with logger
+    observer::builder(Box::new(logger))
+            .create_context("main")
+            .init();
+    
+    // Call your functions
+    let _result = create_temp("temp");
+    
+    // End of the observer.
+    observer::end_context();
+
+}
+```
+
+In `stdout` it should look like
+```text
+logger_initialized
+context: main [0ms, 2020-01-29 11:10:54.728594 UTC]
+    foo__create_temp: 0ms
+        @id: "4839"
+        @@success: true
+        #result: [1,2,3,4]
+        update_temp: 0ms
+            @id: "temp"
+            @@success: true
+            #result: 2314
+            logs:
+               - 0ms: Message from update temp
+``` 
+
+In log file it should look the same.
+```text
+logger_initialized
+context: main [0ms, 2020-01-29 11:10:54.728594 UTC]
+    foo__create_temp: 0ms
+        @id: "4839"
+        @@success: true
+        #result: [1,2,3,4]
+        update_temp: 0ms
+            @id: "temp"
+            @@success: true
+            #result: 2314
+            logs:
+               - 0ms: Message from update temp
+```
+
+
+## Observer `0.1.*` in action
 To use Observer
 1. Have to define events file(json file and mandatory).
 2. Have to define logs dir else it will take default as `/var/log/`.

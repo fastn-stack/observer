@@ -1,17 +1,12 @@
+use crate::observe::Observe;
 use diesel::prelude::*;
-
-#[cfg(debug_assertions)]
 use diesel::query_builder::QueryBuilder;
 
-#[cfg(debug_assertions)]
 pub struct DebugConnection {
     pub conn: diesel::MysqlConnection,
 }
 
-#[cfg(debug_assertions)]
 pub type OConnection = DebugConnection;
-#[cfg(not(debug_assertions))]
-pub type OConnection = diesel::MysqlConnection;
 
 lazy_static! {
     pub static ref MYSQL_POOLS: antidote::RwLock<
@@ -19,14 +14,12 @@ lazy_static! {
     > = antidote::RwLock::new(std::collections::HashMap::new());
 }
 
-#[cfg(debug_assertions)]
 impl diesel::connection::SimpleConnection for OConnection {
     fn batch_execute(&self, query: &str) -> QueryResult<()> {
         self.conn.batch_execute(query)
     }
 }
 
-#[cfg(debug_assertions)]
 impl OConnection {
     fn new(url: &str) -> ConnectionResult<Self> {
         Ok(DebugConnection {
@@ -68,21 +61,23 @@ pub fn connection() -> r2d2::PooledConnection<r2d2_diesel::ConnectionManager<OCo
     connection_with_url(std::env::var("MYSQL_DATABASE_URL").expect("DATABASE_URL not set"))
 }
 
-#[cfg(debug_assertions)]
 impl diesel::connection::Connection for OConnection {
     type Backend = diesel::mysql::Mysql;
     type TransactionManager = diesel::connection::AnsiTransactionManager;
 
+    #[observed(namespace = "observer__mysql")]
     fn establish(url: &str) -> ConnectionResult<Self> {
         OConnection::new(url)
     }
 
+    #[observed(namespace = "observer__mysql")]
     fn execute(&self, query: &str) -> QueryResult<usize> {
         let r = self.conn.execute(query);
         eprintln!("ExecuteQuery: {}", query);
         r
     }
 
+    #[observed(namespace = "observer__mysql")]
     fn query_by_index<T, U>(&self, source: T) -> QueryResult<Vec<U>>
     where
         T: diesel::query_builder::AsQuery,
@@ -98,6 +93,7 @@ impl diesel::connection::Connection for OConnection {
         r
     }
 
+    #[observed(namespace = "observer__mysql")]
     fn query_by_name<T, U>(&self, source: &T) -> QueryResult<Vec<U>>
     where
         T: diesel::query_builder::QueryFragment<diesel::mysql::Mysql>
@@ -114,6 +110,7 @@ impl diesel::connection::Connection for OConnection {
         r
     }
 
+    #[observed(namespace = "observer__mysql")]
     fn execute_returning_count<T>(&self, source: &T) -> QueryResult<usize>
     where
         T: diesel::query_builder::QueryFragment<diesel::mysql::Mysql>

@@ -5,4 +5,11 @@ table! {
         description -> Text,
         allocation_logic -> Text,
     }
+
+//    ,
+//    temp_user (id) {
+//        id -> Int4,
+//        name -> Text
+//    }
+//
 }

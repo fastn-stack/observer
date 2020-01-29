@@ -1,57 +1,5 @@
-use crate::{span::Span, utils, Result};
+use crate::span::Span;
 use serde_derive::{Deserialize, Serialize};
-use std::io::Write;
-
-pub static mut DIR_EXISTS: bool = false;
-pub static mut CON_DIR_EXISTS: bool = false;
-static SPACE: usize = 4;
-
-lazy_static! {
-    pub static ref LOG_DIR: String = {
-        let log_dir = format!(
-            "{}/{}",
-            std::env::var("LOG_DIR").unwrap_or_else(|_| "/var/log".to_owned()),
-            "observer/"
-        );
-        match utils::create_dir_all_if_not_exists(&log_dir) {
-            Ok(_) => {
-                // println!("Observer LOG_DIR :: {}", log_dir);
-                unsafe { DIR_EXISTS = true }
-            }
-            Err(err) => {
-                println!("Not able to create/find dir LOG_DIR :: {}", log_dir);
-                println!("Make sure it will not be able to store logs at local");
-                println!("Err is {:?}", err);
-            }
-        }
-        log_dir
-    };
-    pub static ref CONTEXT_DIR: String = {
-        let context_dir = format!("{}{}/", LOG_DIR.to_string(), "context");
-        match utils::create_dir_all_if_not_exists(&context_dir) {
-            Ok(_) => {
-                // println!("Context LOG_DIR :: {}", context_dir);
-                unsafe { CON_DIR_EXISTS = true }
-            }
-            Err(err) => {
-                println!("Not able to create/find dir CONTEXT_DIR :: {}", context_dir);
-                println!("Make sure it will not be able to store logs at local");
-                println!("Err is {:?}", err);
-            }
-        }
-        context_dir
-    };
-}
-
-pub fn is_log_dir_exists() -> bool {
-    let _ = LOG_DIR.to_string();
-    unsafe { DIR_EXISTS }
-}
-
-pub fn is_ctx_dir_exists() -> bool {
-    let _ = CONTEXT_DIR.to_string();
-    unsafe { CON_DIR_EXISTS }
-}
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Context {
@@ -71,6 +19,10 @@ impl Context {
             key: uuid::Uuid::new_v4().to_string(),
             span_stack: std::cell::RefCell::new(vec![Span::new("main")]),
         }
+    }
+
+    pub fn id(&self) -> String {
+        self.id.to_string()
     }
 
     pub fn start_span(&self, id: &str) {
@@ -131,104 +83,11 @@ impl Context {
         }
     }
 
-    pub fn finalise(&self) -> Result<()> {
+    pub fn finalise(&self) {
         self.end_ctx_frame();
-        if true {
-            // println!("{:#?}", self.span_stack);
-            print_context(&self);
-        } else {
-            if is_ctx_dir_exists() {
-                match utils::create_file(&CONTEXT_DIR, self.key.as_str()) {
-                    Ok(mut file) => {
-                        if let Err(err) = file.write(json!(self).to_string().as_bytes()) {
-                            println!("Context file write error :: {:#?}", err);
-                        };
-                    }
-                    Err(err) => {
-                        println!("Context file create error {:#?}", err);
-                    }
-                };
-            }
-        }
-        Ok(())
     }
 
     pub fn get_key(&self) -> String {
         self.key.clone()
-    }
-}
-
-pub(crate) fn print_context(ctx: &Context) {
-    let mut writer = "".to_string();
-    let frame = ctx.span_stack.borrow();
-    if let Some(frame) = frame.first() {
-        let dur = frame
-            .end_time
-            .as_ref()
-            .unwrap_or(&chrono::Utc::now())
-            .signed_duration_since(frame.start_time);
-        writer.push_str(&format!(
-            "context: {} [{}ms, {}]\n",
-            ctx.id,
-            dur.num_milliseconds(),
-            frame.start_time
-        ));
-        print_span(&mut writer, &frame.sub_frames, SPACE);
-    }
-    println!("{}", writer);
-}
-
-pub(crate) fn print_span(writer: &mut String, spans: &Vec<Span>, space: usize) {
-    for span in spans.iter() {
-        let dur = span
-            .end_time
-            .as_ref()
-            .unwrap_or(&chrono::Utc::now())
-            .signed_duration_since(span.start_time);
-        writer.push_str(&format!(
-            "{:>space$}{}: {}ms\n",
-            "",
-            span.id,
-            dur.num_milliseconds(),
-            space = space
-        ));
-        for (key, value) in span.breadcrumbs.iter() {
-            writer.push_str(&format!(
-                "{:>space$}@{}: {}\n",
-                "",
-                key,
-                value,
-                space = space + SPACE
-            ));
-        }
-        if let Some(success) = span.success {
-            writer.push_str(&format!(
-                "{:>space$}@@success: {}\n",
-                "",
-                success,
-                space = space + SPACE
-            ));
-        }
-        if span.logs.len() > 0 {
-            writer.push_str(&format!(
-                "{:>space$}logs:\n",
-                "",
-                space = space + SPACE
-            ));
-            for log in span.logs.iter() {
-                let dur = span
-                    .start_time
-                    .signed_duration_since(log.0).num_milliseconds();
-                writer.push_str(&format!(
-                    "{:>space$} {}ms: {log}\n",
-                    "",
-                    dur,
-                    log=log.1,
-                    space = space + SPACE + 2,
-                ));
-            }
-        }
-
-        print_span(writer, &span.sub_frames, space + SPACE);
     }
 }

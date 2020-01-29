@@ -38,6 +38,7 @@ features = ["serde"]
 version = "= 1.4.3"
 features = [
     "postgres",
+    "mysql",
 #    "64-column-tables",
     "serde_json",
 #    "network-address",
