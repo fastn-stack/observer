@@ -57,13 +57,13 @@ pub fn builder(backend: Box<dyn Backend>) -> Observer {
 //    });
 //}
 
-pub fn create_context(context_id: &str) {
-    OBSERVER.with(|observer| {
-        if let Some(obj) = observer.borrow().as_ref() {
-            obj.create_context(context_id);
-        }
-    });
-}
+//pub fn create_context(context_id: &str) {
+//    OBSERVER.with(|observer| {
+//        if let Some(obj) = observer.borrow().as_ref() {
+//            obj.create_context(context_id);
+//        }
+//    });
+//}
 
 pub fn end_context() {
     OBSERVER.with(|observer| {
@@ -179,7 +179,12 @@ impl Observer {
     //    }
 
     /// It will iterate through all backends and call their context_created method.
-    pub(crate) fn create_context(&self, context_id: &str) {
+    pub fn create_context(self, context_id: &str) -> Self {
+        &self.create_ctx(context_id);
+        self
+    }
+
+    fn create_ctx(&self, context_id: &str) {
         let mut context = self.context.borrow_mut();
         if context.is_none() {
             context.replace(crate::context::Context::new(context_id.to_string()));
