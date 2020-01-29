@@ -25,6 +25,11 @@ impl Logger {
         self
     }
 
+    pub fn with_path(mut self, path: &str) -> Self {
+        self.path = Some(path.to_string());
+        self
+    }
+
     pub fn build(self) -> Self {
         let path = self.path.as_ref().expect("Logger file path is provided");
         let requests = log4rs::append::file::FileAppender::builder()
