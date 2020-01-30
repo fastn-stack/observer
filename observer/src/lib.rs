@@ -52,9 +52,18 @@ pub fn builder(backend: Box<dyn Backend>) -> Observer {
     Observer::builder(backend)
 }
 
+//pub fn create_observer(backends: Vec<Box<dyn Backend>>) {
+//    OBSERVER.with(|observer| {
+//        let mut observer = observer.borrow_mut();
+//        observer.replace(Observer::new(backends))
+//    });
+//}
+
 pub fn create_context(context_id: &str) {
+    println!("creating context 0");
     OBSERVER.with(|observer| {
         if let Some(obj) = observer.borrow().as_ref() {
+            println!("creating context");
             obj.create_context(context_id);
         }
     });
@@ -162,8 +171,20 @@ impl Observer {
         });
     }
 
+    //    pub fn new(backends: Vec<Box<dyn Backend>>) -> Self {
+    //        for backend in backends.iter() {
+    //            backend.app_started()
+    //        }
+    //        Observer {
+    //            backends,
+    //            context: std::cell::RefCell::new(Box::new(None)),
+    //            log_path: None,
+    //            stdout: false,
+    //        }
+    //    }
+
     /// It will iterate through all backends and call their context_created method.
-    pub(crate) fn create_context(&self, context_id: &str) {
+    pub fn create_context(&self, context_id: &str) {
         let mut context = self.context.borrow_mut();
         if context.is_none() {
             context.replace(crate::context::Context::new(context_id.to_string()));
@@ -173,10 +194,20 @@ impl Observer {
         }
     }
 
+    //    fn create_ctx(&self, context_id: &str) {
+    //        let mut context = self.context.borrow_mut();
+    //        if context.is_none() {
+    //            context.replace(crate::context::Context::new(context_id.to_string()));
+    //            for backend in self.backends.iter() {
+    //                backend.context_created(context_id);
+    //            }
+    //        }
+    //    }
+
     /// It will end context object and drop things if needed.
     pub(crate) fn end_context(&self) {
         if let Some(ctx) = self.context.borrow().as_ref() {
-            let _ = ctx.finalise();
+            ctx.finalise();
             for backend in self.backends.iter() {
                 backend.context_ended(&ctx);
             }

@@ -8,7 +8,7 @@
 
 - [x] `observed` should use function name by default
 - [x] result handling: if result of an observed function implements Resulty,
-      then call resulty.to_string(), else call Display, if none, code cant 
+      then call resulty.to_string(), else call Display, if none, code cant
       compile
 
 # Later

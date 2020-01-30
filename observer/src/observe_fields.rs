@@ -130,7 +130,7 @@ pub fn observe_result_list<T: serde::Serialize>(value: &[T]) {
     observe_result(json!(value));
 }
 
-pub fn observe_result_map<K, V>(value: &HashMap<K, V>)
+pub fn observe_result_map<K, V, S: ::std::hash::BuildHasher>(value: &HashMap<K, V, S>)
 where
     K: std::hash::Hash + std::cmp::Eq + serde::Serialize,
     V: serde::Serialize,

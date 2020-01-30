@@ -1,6 +1,6 @@
 [package]
 name = "observer"
-version = "0.2.1"
+version = "0.2.0"
 authors = ["AbrarNitk <abrar.nitk@gmail.com>"]
 edition = "2018"
 description = "Observer"
@@ -12,6 +12,10 @@ repository = "https://github.com/ackotech/observer"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[features]
+default = ["postgres"]
+postgres = ["diesel/postgres"]
+
 [dependencies]
 serde = "~1.0.27"
 serde_derive = "~1.0.27"
@@ -19,8 +23,8 @@ serde_json = "~1.0.9"
 failure = "~0.1.1"
 uuid = { version = "0.7", features = ["serde", "v4"] }
 lazy_static = "1"
-observer_attribute = "0.1.6"
-diesel = { version = "1.4.3", features = ["postgres", "r2d2", "chrono", "sqlite", "mysql"] }
+observer_attribute = { path = "../observer_attribute"  }
+diesel = { version = "1.4.3", features = ["r2d2", "chrono"] }
 r2d2-diesel = "1.0.0"
 antidote = "1.0.0"
 r2d2 = "0.8"
@@ -31,7 +35,3 @@ sqlparser = "0.5.0"
 [dependencies.chrono]
 version = "0.4"
 features = ["serde"]
-[features]
-postgres = []
-mysql = []
-sqlite = []

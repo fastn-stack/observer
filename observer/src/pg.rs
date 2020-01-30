@@ -75,9 +75,7 @@ impl diesel::connection::Connection for OConnection {
         let (operation, table) = crate::sql_parse::parse_sql(&query);
         crate::observe_fields::observe_string("query", &&query.replace("\"", ""));
         crate::observe_span_id(&format!("db__{}__{}", operation, table.replace("\"", "")));
-        let r = self.conn.execute(query);
-        // eprintln!("ExecuteQuery: {}", query);
-        r
+        self.conn.execute(query)
     }
 
     #[observed(namespace = "observer__pg")] // Will not use any namespace here because whitelisting by `query_by_index`
@@ -95,9 +93,7 @@ impl diesel::connection::Connection for OConnection {
         let (operation, table) = crate::sql_parse::parse_sql(&debug_query);
         crate::observe_fields::observe_string("query", &debug_query.replace("\"", ""));
         crate::observe_span_id(&format!("db__{}__{}", operation, table.replace("\"", "")));
-        let r = self.conn.query_by_index(query);
-        // eprintln!("QueryByIndex: {}", debug_query.as_str());
-        r
+        self.conn.query_by_index(query)
     }
 
     #[observed(namespace = "observer__pg")]
@@ -114,9 +110,7 @@ impl diesel::connection::Connection for OConnection {
         let (operation, table) = crate::sql_parse::parse_sql(&query);
         crate::observe_fields::observe_string("query", &query.replace("\"", ""));
         crate::observe_span_id(&format!("db__{}__{}", operation, table.replace("\"", "")));
-        let r = self.conn.query_by_name(source);
-        // eprintln!("QueryByName: {}", query.as_str());
-        r
+        self.conn.query_by_name(source)
     }
 
     #[observed(namespace = "observer__pg")]
@@ -132,9 +126,7 @@ impl diesel::connection::Connection for OConnection {
         let (operation, table) = crate::sql_parse::parse_sql(&query);
         crate::observe_fields::observe_string("query", &query.replace("\"", ""));
         crate::observe_span_id(&format!("db__{}__{}", operation, table.replace("\"", "")));
-        let r = self.conn.execute_returning_count(source);
-        // eprintln!("ExecuteReturningCount: {}", query.as_str());
-        r
+        self.conn.execute_returning_count(source)
     }
 
     fn transaction_manager(&self) -> &Self::TransactionManager {

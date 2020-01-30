@@ -28,7 +28,7 @@ struct Event {
 lazy_static! {
     static ref EVENTS: HashMap<String, Event> = {
         let events_path =
-            env::var("EVENTS_PATH").expect("Set env variable of EVENTS_PATH to use observer");
+            env::var("EVENTS_PATH").unwrap_or_else(|_| "/app/events.json".to_string());
         println!("Events Path:: {}", events_path);
         let events_file =
             File::open(&events_path).expect(&format!("Not able to load {}", events_path));

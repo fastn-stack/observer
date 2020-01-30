@@ -29,7 +29,7 @@ impl Logger {
         self
     }
 
-    pub fn build(self) -> Self {
+    pub fn build(self) -> Box<Self> {
         if let Some(path) = &self.path {
             let requests = log4rs::append::file::FileAppender::builder()
                 .encoder(Box::new(log4rs::encode::pattern::PatternEncoder::new(
@@ -49,7 +49,7 @@ impl Logger {
                 .unwrap();
             log4rs::init_config(config).expect("Failed to create logging builder");
         }
-        self
+        Box::new(self)
     }
 
     pub(crate) fn handle_log(&self, log: &str) {
@@ -71,8 +71,9 @@ impl crate::Backend for Logger {
         // self.handle_log("logger_ended");
     }
 
-    fn context_created(&self, _id: &str) {
-        // self.handle_log(&format!("context_created with id: {}", id));
+    fn context_created(&self, id: &str) {
+        println!("Hellow");
+        self.handle_log(&format!("context_created with id: {}", id));
     }
 
     fn context_ended(&self, ctx: &crate::Context) {
@@ -115,7 +116,7 @@ pub(crate) fn print_context(ctx: &crate::Context) -> String {
     writer
 }
 
-pub(crate) fn print_span(writer: &mut String, spans: &Vec<crate::span::Span>, space: usize) {
+pub(crate) fn print_span(writer: &mut String, spans: &[crate::span::Span], space: usize) {
     for span in spans.iter() {
         let dur = span
             .end_time
@@ -164,7 +165,7 @@ pub(crate) fn print_span(writer: &mut String, spans: &Vec<crate::span::Span>, sp
             ));
         }
 
-        if span.logs.len() > 0 {
+        if !span.logs.is_empty() {
             writer.push_str(&format!("{:>space$}logs:\n", "", space = space + SPACE));
             for log in span.logs.iter() {
                 let dur = log

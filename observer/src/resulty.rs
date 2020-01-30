@@ -41,8 +41,6 @@
 //    }
 //}
 
-
-
 //#[observed]
 //pub fn nth_prime(in_: In, n: i32) -> i32 {
 //    observe_field!(in_.ctx, "n", n);
@@ -121,7 +119,6 @@
 //        where F: FnOnce(T) -> i32;
 //}
 //
-
 
 //impl Resulty for Result<E, T>
 //where E: std::fmt::Debug,

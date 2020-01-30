@@ -2,19 +2,19 @@
 
 ** Observer is a library to capture observability of rust servers
 
-## Observer 0.2 in action
-To use observer 0.2
+## Observer 2.0 in action
+To use observer 2.0
 1. Add dependency into `Cargo.toml`.
 ```toml
-observer = "0.2.1"
+observer = "0.2.0"
 observer_attribute = "0.1.6"
 ```
-2. import these dependency into `lib.rs`. 
+2. import these dependency into `lib.rs`.
 ```rust
 extern crate observer;
 #[macro_use]
 extern crate observer_attribute;
-``` 
+```
 3. Define event json file and export events path as EVENTS_PATH.
 ```shell script
 export EVENTS_PATH="<Path of events.json file>"
@@ -50,7 +50,7 @@ event.json file
 use observer::prelude::*;
 use observer::Result;
 
-pub struct Temp; 
+pub struct Temp;
 
 #[observed(with_result)]
 pub fn update_temp(id: &str) -> observer::Result<Temp> {
@@ -75,12 +75,13 @@ fn main(){
             .build();
 
     // Initialize observer with logger
-    observer::builder(Box::new(logger)).init();
-    observer::create_context("main");
-    
+    observer::builder(Box::new(logger))
+            .create_context("main")
+            .init();
+
     // Call your functions
     let _result = create_temp("temp");
-    
+
     // End of the observer.
     observer::end_context();
 
@@ -101,7 +102,7 @@ context: main [0ms, 2020-01-29 11:10:54.728594 UTC]
             #result: 2314
             logs:
                - 0ms: Message from update temp
-``` 
+```
 
 In log file it should look the same.
 ```text
@@ -126,10 +127,10 @@ To use Observer
 2. Have to define logs dir else it will take default as `/var/log/`.
 
 Firstly We have to define an events to observe functions. Here Events are nothing
-but same as function name and in events we have tell which fields has be save in breadcrumbs. 
-And critical means whether to save this function locally or queue. If critical 
+but same as function name and in events we have tell which fields has be save in breadcrumbs.
+And critical means whether to save this function locally or queue. If critical
 It will go directly to queue else Observer will save it local.
- 
+
 Here we have defined to events `observer_me` and  `observe_me_too` (same as function name).
 
 ```json
@@ -161,7 +162,7 @@ use observer::{
 
 #[observed] // Need to define only this on top of fn which we want to observe
 // Context reference is mandatory to pass in observer function.
-// fn should be return Result type. 
+// fn should be return Result type.
 fn observe_me(ctx: &Context, other_params: i32)-> Result<String> {
     // in "foo" can store only string value else it will give compile error
     // It will this in breadcrumbs in Frame
@@ -170,10 +171,10 @@ fn observe_me(ctx: &Context, other_params: i32)-> Result<String> {
     // It will this in breadcrumbs in Frame
     observe_field("foo1", 32.02);
     some_other_fn_call();
-    
+
     // Observing this fn also and it will become a sub-frame of observe_me
     observe_me_too(ctx);
-    Ok("observed") 
+    Ok("observed")
 }
 
 fn some_other_fn_call() {}
@@ -201,7 +202,7 @@ impl Queue for DemoQueue {
 
 fn main() {
     let ctx = Context::new(
-        "test_context".to_string(), 
+        "test_context".to_string(),
         Box::new(DemoQueue{name: "Abrar".to_string()})
     );
     let _result = observe_me(&ctx, 12);
@@ -215,7 +216,7 @@ Because observer_me_too is calling calling inside from observer_me so it will be
 sub-frame of observer_me.  
 
 It will create log dir by given path or default(/var/log/) and save context into
-log_dir_path/context and events in log_dir_path/observe_me and log_dir_path/observe_me_too 
+log_dir_path/context and events in log_dir_path/observe_me and log_dir_path/observe_me_too
 based of criticality of of an event.
 
 ## Context log will look like this
