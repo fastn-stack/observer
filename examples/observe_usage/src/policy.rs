@@ -22,6 +22,7 @@ impl Policy {
 
     #[observed(namespace = "foo")]
     pub fn create_policy(name: &str) -> Result<Policy> {
+        std::thread::sleep(std::time::Duration::from_secs(1));
         // thread::sleep(time::Duration::from_secs(3));
         db_call();
         let policy = Policy {
