@@ -131,7 +131,7 @@ pub(crate) fn observe_result(result: impl serde::Serialize) {
 }
 
 #[allow(dead_code)]
-pub(crate) fn observe_span_id(id: &str) {
+pub fn observe_span_id(id: &str) {
     CONTEXT.with(|context| {
         if let Some(ctx) = context.borrow().as_ref() {
             ctx.observe_span_id(id);

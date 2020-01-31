@@ -1,5 +1,3 @@
-extern crate proc_macro;
-extern crate proc_macro2;
 #[macro_use]
 extern crate syn;
 #[macro_use]
@@ -8,11 +6,10 @@ extern crate quote;
 extern crate lazy_static;
 #[macro_use]
 extern crate serde_derive;
-extern crate serde_json;
+extern crate proc_macro;
+extern crate proc_macro2;
 
 use darling::FromMeta;
-use proc_macro::TokenStream;
-use proc_macro2::Span;
 use std::collections::HashMap;
 use std::str::FromStr;
 use std::string::ToString;
@@ -25,10 +22,26 @@ struct Event {
     fields: HashMap<String, String>,
 }
 
+fn get_path() -> String {
+    env::var("EVENTS_PATH").unwrap_or_else(|_| {
+        let mut current = std::env::current_dir().expect("current_dir not found");
+        loop {
+            let path = current.join("observer.json");
+            if path.exists() {
+                return path.to_string_lossy().to_string();
+            }
+            current = match current.parent() {
+                Some(p) => p.to_owned(),
+                None => panic!("Could not find observer.json"),
+            };
+        }
+    })
+}
+
 lazy_static! {
     static ref EVENTS: HashMap<String, Event> = {
-        let events_path =
-            env::var("EVENTS_PATH").unwrap_or_else(|_| "/app/events.json".to_string());
+        let events_path = get_path();
+
         println!("Events Path:: {}", events_path);
         let events_file =
             File::open(&events_path).expect(&format!("Not able to load {}", events_path));
@@ -58,7 +71,10 @@ struct MacroArgs {
 }
 
 #[proc_macro_attribute]
-pub fn observed(metadata: TokenStream, input: TokenStream) -> TokenStream {
+pub fn observed(
+    metadata: proc_macro::TokenStream,
+    input: proc_macro::TokenStream,
+) -> proc_macro::TokenStream {
     let attr_args = parse_macro_input!(metadata as syn::AttributeArgs);
     let args: MacroArgs = match MacroArgs::from_list(&attr_args) {
         Ok(v) => v,
@@ -139,7 +155,7 @@ fn rewrite_func_block(mut block: Box<syn::Block>, table_name: &str) -> Box<syn::
                                         let func = "observe_".to_string()
                                             + &get_func(s.value(), table_name);
                                         path.path.segments[0].ident =
-                                            syn::Ident::new(&func, Span::call_site());
+                                            syn::Ident::new(&func, proc_macro2::Span::call_site());
                                     }
                                 }
                             }
@@ -148,7 +164,7 @@ fn rewrite_func_block(mut block: Box<syn::Block>, table_name: &str) -> Box<syn::
                                 let f_name =
                                     "observe_result_".to_string() + &get_result_type(table_name);
                                 path.path.segments[0].ident =
-                                    syn::Ident::new(&f_name, Span::call_site());
+                                    syn::Ident::new(&f_name, proc_macro2::Span::call_site());
                             }
 
                             stmts.push(syn::Stmt::Semi(
@@ -186,7 +202,10 @@ fn rewrite_func_block(mut block: Box<syn::Block>, table_name: &str) -> Box<syn::
 }
 
 #[proc_macro_attribute]
-pub fn balanced_if(_metadata: TokenStream, input: TokenStream) -> TokenStream {
+pub fn balanced_if(
+    _metadata: proc_macro::TokenStream,
+    input: proc_macro::TokenStream,
+) -> proc_macro::TokenStream {
     let item: syn::Item = syn::parse(input).expect("failed to parse input");
 
     // log_simple(&format!("{:#?}", item));
@@ -197,7 +216,7 @@ pub fn balanced_if(_metadata: TokenStream, input: TokenStream) -> TokenStream {
 }
 
 #[proc_macro_derive(Resulty)]
-pub fn derive_resulty(input: TokenStream) -> TokenStream {
+pub fn derive_resulty(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let item: syn::Item = syn::parse(input.clone()).expect("failed to parse input");
     let struc = get_struct_name(item).replace("\"", "");
     let st = &format!("impl Resulty for {} {}", struc, "{}");
