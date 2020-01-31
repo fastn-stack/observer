@@ -47,7 +47,8 @@ pub struct Observer {
 }
 
 lazy_static! {
-    static ref OBSERVER: std::sync::Arc<std::sync::RwLock<Option<Observer>>> = std::sync::Arc::new(std::sync::RwLock::new(None));
+    static ref OBSERVER: std::sync::Arc<std::sync::RwLock<Option<Observer>>> =
+        std::sync::Arc::new(std::sync::RwLock::new(None));
 }
 
 thread_local! {
@@ -184,7 +185,7 @@ impl Observer {
         CONTEXT.with(|ctx| {
             let mut ctx = ctx.borrow_mut();
             if let Some(ctx) = ctx.as_ref() {
-                let _ = ctx.finalise();
+                ctx.finalise();
                 for backend in self.backends.iter() {
                     backend.context_ended(&ctx);
                 }
