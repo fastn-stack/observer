@@ -14,14 +14,14 @@ repository = "https://github.com/ackotech/observer"
 proc-macro = true
 
 [dependencies]
-quote = "0.6"
-proc-macro2 = "0.4"
-lazy_static = "1"
-serde = "~1.0.27"
-serde_derive = "~1.0.27"
-serde_json = "~1.0.9"
-darling = "0.9.0"
+quote = "1.0.3"
+proc-macro2 = "1.0.9"
+lazy_static = "1.4.0"
+serde = "1.0.104"
+serde_derive = "1.0.104"
+serde_json = "1.0.48"
+darling = "0.10.2"
 
 [dependencies.syn]
-version = "0.15.42"
+version = "1.0.16"
 features = ["full"]
