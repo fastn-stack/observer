@@ -1,4 +1,7 @@
+use colored::Colorize;
+
 static SPACE: usize = 4;
+
 pub struct Logger {
     path: Option<String>,
     stdout: bool,
@@ -52,7 +55,7 @@ impl Logger {
         Box::new(self)
     }
 
-    pub(crate) fn handle_log(&self, log: &str) {
+    pub fn handle_log(&self, log: &str) {
         if self.path.is_some() {
             info!("{}", log);
         }
@@ -62,124 +65,176 @@ impl Logger {
     }
 }
 
+pub fn is_replay() -> bool {
+    std::env::args().any(|e| e == "--replay")
+}
+
 impl crate::Backend for Logger {
-    fn app_started(&self) {
-        self.handle_log("logger_initialized");
-    }
-
-    fn app_ended(&self) {
-        // self.handle_log("logger_ended");
-    }
-
-    fn context_created(&self, _id: &str) {
-        // self.handle_log(&format!("context_created with id: {}", id));
-    }
-
     fn context_ended(&self, ctx: &crate::Context) {
-        let log = if self.stdout || self.path.is_some() {
-            print_context(ctx)
-        } else {
-            "".to_string()
-        };
-        self.handle_log(&log);
-    }
+        if !is_replay() {
+            println!("{}", print_context(ctx));
+        }
 
-    fn span_created(&self, _id: &str) {
-        // self.handle_log(&format!("span_created with id: {}", id));
-    }
-    fn span_data(&self, _key: &str, _value: &str) {}
-    fn span_ended(&self, _span: Option<&crate::span::Span>) {
-        //        if let Some(span) = span {
-        //            self.handle_log(&format!("span_ended with id: {}", span.id));
-        //        }
+        // let log = if self.stdout || self.path.is_some() {
+        //     print_context(ctx)
+        // } else {
+        //     "".to_string()
+        // };
+        // self.handle_log(&log);
+        // println!("trace without data:\n{}", ctx.trace_without_data(false));
+        // println!(
+        //     "trace without transient data:\n{}",
+        //     ctx.trace_without_data(true)
+        // );
     }
 }
 
 pub(crate) fn print_context(ctx: &crate::Context) -> String {
-    let mut writer = "".to_string();
-    let frame = ctx.span_stack.borrow();
-    if let Some(frame) = frame.first() {
-        let dur = frame
-            .end_time
-            .as_ref()
-            .unwrap_or(&chrono::Utc::now())
-            .signed_duration_since(frame.start_time);
-        writer.push_str(&format!(
-            "context: {} [{}ms, {}]\n",
-            ctx.id(),
-            dur.num_milliseconds(),
-            frame.start_time
-        ));
-        print_span(&mut writer, &frame.sub_frames, SPACE);
+    let mut buffer = "".to_string();
+    buffer.push_str(&format!(
+        "context: {} [{}] ",
+        ctx.id(),
+        ctx.created_on.to_rfc3339()
+    ));
+    for span in ctx.span_stack.borrow().iter() {
+        print_span(&mut buffer, span, 0);
     }
-    writer
+    buffer
 }
 
-pub(crate) fn print_span(writer: &mut String, spans: &[crate::span::Span], space: usize) {
-    for span in spans.iter() {
-        let dur = span
-            .end_time
-            .as_ref()
-            .unwrap_or(&chrono::Utc::now())
-            .signed_duration_since(span.start_time);
-        writer.push_str(&format!(
-            "{:>space$}{}: {}ms\n",
-            "",
-            span.id,
-            dur.num_milliseconds(),
-            space = space
-        ));
-        for (key, value) in span.breadcrumbs.iter() {
-            writer.push_str(&format!(
-                "{:>space$}@{}: {}\n",
-                "",
-                key,
-                value,
-                space = space + SPACE
-            ));
-        }
-        if let Some(success) = span.success {
-            writer.push_str(&format!(
-                "{:>space$}@@success: {}\n",
-                "",
-                success,
-                space = space + SPACE
-            ));
-        }
-        if let Some(result) = &span.result {
-            writer.push_str(&format!(
-                "{:>space$}#result: {}\n",
-                "",
-                result,
-                space = space + SPACE
-            ));
-        }
+pub(crate) fn print_span(buffer: &mut String, span: &crate::Span, space: usize) {
+    buffer.push_str(&format!(
+        "{}: {}\n",
+        {
+            let span_id = if span.duration() > std::time::Duration::from_millis(1) {
+                span.id.red()
+            } else {
+                span.id.green()
+            };
+            span.success
+                .map(|v| {
+                    if v {
+                        span_id.clone()
+                    } else {
+                        span_id.clone().underline()
+                    }
+                })
+                .unwrap_or_else(|| span_id.bold())
+        },
+        elapsed(span.duration()),
+    ));
 
-        if let Some(err) = &span.err {
-            writer.push_str(&format!(
-                "{:>space$}#error: {}\n",
-                "",
-                err,
-                space = space + SPACE
-            ));
-        }
-
-        if !span.logs.is_empty() {
-            writer.push_str(&format!("{:>space$}logs:\n", "", space = space + SPACE));
-            for log in span.logs.iter() {
-                let dur = log
-                    .0
-                    .signed_duration_since(span.start_time)
-                    .num_milliseconds();
-                writer.push_str(&format!(
-                    "{:>space$} - {}ms: {log}\n",
+    for (ts, item) in span.items.iter() {
+        let d = elapsed(ts.0);
+        match item {
+            crate::SpanItem::Log { message } => {
+                buffer.push_str(&format!(
+                    "{:_>space$}- {}: {message}\n",
                     "",
-                    dur,
-                    log = log.1,
-                    space = space + SPACE + 2,
+                    d,
+                    message = message,
+                    space = space,
                 ));
             }
+            crate::SpanItem::Field { name, value } => {
+                buffer.push_str(&format!(
+                    "{:_>space$}- {}: {}={}\n",
+                    "",
+                    d,
+                    name,
+                    if let serde_json::Value::String(s) = value {
+                        s.to_string()
+                    } else {
+                        value.to_string()
+                    },
+                    space = space
+                ));
+            }
+            crate::SpanItem::TransientField { name, value } => {
+                buffer.push_str(&format!(
+                    "{:_>space$}- {}: {}:={}\n",
+                    "",
+                    d,
+                    name,
+                    if let serde_json::Value::String(s) = value {
+                        s.to_string()
+                    } else {
+                        value.to_string()
+                    },
+                    space = space
+                ));
+            }
+            crate::SpanItem::Query {
+                query,
+                bind,
+                result,
+            } => {
+                buffer.push_str(&format!(
+                    "{:_>space$}- query: {}\n",
+                    "",
+                    query,
+                    space = space
+                ));
+                if let Some(bind) = bind {
+                    buffer.push_str(&format!(
+                        "{:_>space$}   bind: {}\n",
+                        "",
+                        bind,
+                        space = space
+                    ));
+                }
+                match result {
+                    Ok(rows) => buffer.push_str(&format!(
+                        "{:_>space$}   rows: {}\n",
+                        "",
+                        rows,
+                        space = space
+                    )),
+                    Err(e) => {
+                        buffer.push_str(&format!("{:_>space$}  error: {}\n", "", e, space = space))
+                    }
+                };
+            }
+            crate::SpanItem::Frame(inner) => {
+                buffer.push_str(&format!("{:_>space$}- {}: ", "", d, space = space));
+                print_span(buffer, inner, space + SPACE);
+            }
         }
-        print_span(writer, &span.sub_frames, space + SPACE);
+    }
+
+    if let Some(result) = &span.result {
+        buffer.push_str(&format!(
+            "{:_>space$}result: {}\n",
+            "",
+            result,
+            space = SPACE + space - 2
+        ));
+    }
+
+    if let Some(err) = &span.err {
+        buffer.push_str(&format!(
+            "{:_>space$}error: {}\n",
+            "",
+            err,
+            space = SPACE + space - 2
+        ));
+    }
+}
+
+pub fn elapsed(d: std::time::Duration) -> String {
+    let nanos = d.subsec_nanos();
+    let fraction = match nanos {
+        t if nanos < 1000 => format!("{: >3}ns", t),
+        t if nanos < 1_000_000 => format!("{: >3.*}µs", 0, f64::from(t) / 1000.0),
+        t => format!("{: >3.*}ms", 0, f64::from(t) / 1_000_000.0),
+    };
+    let secs = d.as_secs();
+    match secs {
+        _ if secs == 0 => fraction,
+        t if secs < 5 => format!("{}.{:03}s", t, nanos / 1000),
+        t if secs < 60 => format!("{}.{:03}s", t, nanos / 1_000_000),
+        t if secs < 3600 => format!("{}m {}s", t / 60, t % 60),
+        t if secs < 86400 => format!("{}h {}m", t / 3600, (t % 3600) / 60),
+        t => format!("{}s", t),
     }
 }

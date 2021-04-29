@@ -1,4 +1,4 @@
-use crate::observe::Observe;
+use crate as observer;
 use diesel::prelude::*;
 use diesel::query_builder::QueryBuilder;
 
@@ -28,37 +28,37 @@ impl OConnection {
     }
 }
 
-fn _connection_pool<T: Into<String>>(
-    url: T,
-) -> r2d2::Pool<r2d2_diesel::ConnectionManager<OConnection>> {
-    let manager = r2d2_diesel::ConnectionManager::<OConnection>::new(url);
-    r2d2::Pool::builder()
-        .max_size(10)
-        .build(manager)
-        .expect("Fail to create Diesel Connection Pool")
-}
+fn log_query(q: &str, result: Result<usize, String>) {
+    if q == "SELECT 1" {
+        crate::observe_span_id("select_1");
+        return;
+    };
 
-pub fn connection_with_url(
-    db_url: String,
-) -> r2d2::PooledConnection<r2d2_diesel::ConnectionManager<OConnection>> {
+    let (query, bind) = match q.find("-- binds: ") {
+        Some(idx) => q.split_at(idx),
+        None => (q, ""),
+    };
+
     {
-        if let Some(pool) = PG_POOLS.read().get(&db_url) {
-            return pool.get().unwrap();
-        }
+        let (operation, table) = crate::sql_parse::parse_sql(query);
+        if table.is_empty() {
+            crate::observe_span_id(&format!("db__{}", operation.as_str()));
+        } else {
+            crate::observe_span_id(&format!(
+                "db__{}__{}",
+                operation.as_str(),
+                table.replace("\"", "")
+            ));
+        };
     }
-    match PG_POOLS.write().entry(db_url.clone()) {
-        std::collections::hash_map::Entry::Vacant(e) => {
-            let conn_pool = _connection_pool(db_url);
-            let conn = conn_pool.get().unwrap();
-            e.insert(conn_pool);
-            conn
-        }
-        std::collections::hash_map::Entry::Occupied(e) => e.get().get().unwrap(),
-    }
-}
 
-pub fn connection() -> r2d2::PooledConnection<r2d2_diesel::ConnectionManager<OConnection>> {
-    connection_with_url(std::env::var("PG_DATABASE_URL").expect("DATABASE_URL not set"))
+    let bind = if bind.is_empty() {
+        None
+    } else {
+        Some(bind.replacen("-- binds: ", "", 1))
+    };
+
+    crate::observe_query(query.trim().to_string(), bind, result);
 }
 
 impl diesel::connection::Connection for OConnection {
@@ -72,10 +72,16 @@ impl diesel::connection::Connection for OConnection {
 
     #[observed(namespace = "observer__pg")]
     fn execute(&self, query: &str) -> QueryResult<usize> {
-        let (operation, table) = crate::sql_parse::parse_sql(&query);
-        crate::observe_fields::observe_string("query", &&query.replace("\"", ""));
-        crate::observe_span_id(&format!("db__{}__{}", operation, table.replace("\"", "")));
-        self.conn.execute(query)
+        match self.conn.execute(query) {
+            Ok(i) => {
+                log_query(query, Ok(i));
+                Ok(i)
+            }
+            Err(e) => {
+                log_query(query, Err(e.to_string()));
+                Err(e)
+            }
+        }
     }
 
     #[observed(namespace = "observer__pg")] // Will not use any namespace here because whitelisting by `query_by_index`
@@ -90,10 +96,16 @@ impl diesel::connection::Connection for OConnection {
         let query = source.as_query();
 
         let debug_query = diesel::debug_query(&query).to_string();
-        let (operation, table) = crate::sql_parse::parse_sql(&debug_query);
-        crate::observe_fields::observe_string("query", &debug_query.replace("\"", ""));
-        crate::observe_span_id(&format!("db__{}__{}", operation, table.replace("\"", "")));
-        self.conn.query_by_index(query)
+        match self.conn.query_by_index(query) {
+            Ok(v) => {
+                log_query(debug_query.as_str(), Ok(v.len()));
+                Ok(v)
+            }
+            Err(e) => {
+                log_query(debug_query.as_str(), Err(e.to_string()));
+                Err(e)
+            }
+        }
     }
 
     #[observed(namespace = "observer__pg")]
@@ -107,10 +119,16 @@ impl diesel::connection::Connection for OConnection {
             source.to_sql(&mut qb)?;
             qb.finish()
         };
-        let (operation, table) = crate::sql_parse::parse_sql(&query);
-        crate::observe_fields::observe_string("query", &query.replace("\"", ""));
-        crate::observe_span_id(&format!("db__{}__{}", operation, table.replace("\"", "")));
-        self.conn.query_by_name(source)
+        match self.conn.query_by_name(source) {
+            Ok(v) => {
+                log_query(query.as_str(), Ok(v.len()));
+                Ok(v)
+            }
+            Err(e) => {
+                log_query(query.as_str(), Err(e.to_string()));
+                Err(e)
+            }
+        }
     }
 
     #[observed(namespace = "observer__pg")]
@@ -123,10 +141,16 @@ impl diesel::connection::Connection for OConnection {
             source.to_sql(&mut qb)?;
             qb.finish()
         };
-        let (operation, table) = crate::sql_parse::parse_sql(&query);
-        crate::observe_fields::observe_string("query", &query.replace("\"", ""));
-        crate::observe_span_id(&format!("db__{}__{}", operation, table.replace("\"", "")));
-        self.conn.execute_returning_count(source)
+        match self.conn.execute_returning_count(source) {
+            Ok(i) => {
+                log_query(query.as_str(), Ok(i));
+                Ok(i)
+            }
+            Err(e) => {
+                log_query(query.as_str(), Err(e.to_string()));
+                Err(e)
+            }
+        }
     }
 
     fn transaction_manager(&self) -> &Self::TransactionManager {

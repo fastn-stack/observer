@@ -1,19 +1,48 @@
-use chrono::prelude::*;
-use std::collections::HashMap;
-use std::fmt::{self, Debug};
+#[derive(Debug)]
+pub struct Duration(pub std::time::Duration);
 
-#[derive(Serialize, Deserialize)]
+impl serde::Serialize for Duration {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_u64(self.0.as_nanos() as u64)
+    }
+}
+
+#[derive(Debug, Serialize)]
+#[serde(tag = "type")]
+pub enum SpanItem {
+    Log {
+        message: &'static str,
+    },
+    Field {
+        name: &'static str,
+        value: serde_json::Value,
+    },
+    TransientField {
+        name: &'static str,
+        value: serde_json::Value,
+    },
+    Query {
+        query: String,
+        bind: Option<String>,
+        result: Result<usize, String>,
+    },
+    Frame(Span),
+}
+
+#[derive(Serialize)]
 pub struct Span {
     pub id: String,
     key: String,
-    pub breadcrumbs: HashMap<String, serde_json::Value>,
+    pub items: Vec<(Duration, SpanItem)>,
     pub success: Option<bool>,
     pub result: Option<serde_json::Value>,
     pub err: Option<String>,
-    pub logs: Vec<(DateTime<Utc>, String)>,
-    pub start_time: DateTime<Utc>,
-    pub end_time: Option<DateTime<Utc>>,
-    pub sub_frames: Vec<Span>,
+    #[serde(skip_serializing)]
+    pub created_on: std::time::Instant,
+    pub duration: Option<Duration>,
 }
 
 impl Clone for Span {
@@ -22,81 +51,117 @@ impl Clone for Span {
     }
 }
 
-impl Debug for Span {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+impl std::fmt::Debug for Span {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         f.debug_struct("Span")
             .field("id", &self.id)
             .field("key", &self.key)
-            .field("breadcrumbs", &self.breadcrumbs)
+            .field("items", &self.items)
             .field("success", &self.success)
             .field("result", &self.result)
             .field("err", &self.err)
-            .field("logs", &self.logs)
-            .field("start_time", &self.start_time)
-            .field("end_time", &self.end_time)
-            .field("sub_frames", &self.sub_frames)
+            .field("start_time", &self.created_on)
+            .field("duration", &self.duration)
             .finish()
     }
 }
 
 impl Span {
+    pub fn duration(&self) -> std::time::Duration {
+        self.duration
+            .as_ref()
+            .map(|v| v.0)
+            .unwrap_or_else(|| std::time::Instant::now().duration_since(self.created_on))
+    }
+
     pub fn new(id: &str) -> Span {
         Span {
             id: id.to_owned(),
             key: uuid::Uuid::new_v4().to_string(),
-            breadcrumbs: HashMap::new(),
+            items: Vec::new(),
             success: None,
             result: None,
             err: None,
-            logs: vec![],
-            start_time: Utc::now(),
-            end_time: None,
-            sub_frames: vec![],
+            created_on: std::time::Instant::now(),
+            duration: None,
         }
     }
     pub(crate) fn set_id(&mut self, id: &str) {
         self.id = id.to_string();
     }
 
-    pub fn start(&mut self) -> &mut Self {
-        self.start_time = Utc::now();
-        self
-    }
-
     pub fn end(&mut self) -> &mut Self {
-        self.end_time = Some(Utc::now());
+        // TODO: assert .ended_on is null
+        self.duration = Some(Duration(
+            std::time::Instant::now().duration_since(self.created_on),
+        ));
         self
     }
 
     pub fn set_result(&mut self, result: impl serde::Serialize) -> &mut Self {
+        // TODO: assert .result is null
         self.result = Some(json!(result));
         self
     }
 
     pub fn set_success(&mut self, is_success: bool) -> &mut Self {
+        // TODO: assert .success is null
         self.success = Some(is_success);
         self
     }
 
     pub fn set_err(&mut self, err: Option<String>) -> &mut Self {
+        // TODO: assert .err is null
         self.err = err;
         self
     }
 
-    pub fn add_sub_frame(&mut self, frame: Span) {
-        self.sub_frames.push(frame);
+    pub fn add_sub_frame(&mut self, created_on: std::time::Instant, frame: Span) {
+        self.items.push((
+            Duration(created_on.duration_since(self.created_on)),
+            SpanItem::Frame(frame),
+        ));
     }
 
     pub fn get_key(&self) -> String {
         self.key.clone()
     }
 
-    pub fn add_logs(&mut self, log: &str) {
-        self.logs.push((Utc::now(), log.to_string()))
+    pub fn add_log(&mut self, log: &'static str) {
+        self.items.push((
+            Duration(std::time::Instant::now().duration_since(self.created_on)),
+            SpanItem::Log { message: log },
+        ))
     }
 
     //adding breadcrumbs
-    pub fn add_breadcrumbs(&mut self, name: &str, value: serde_json::Value) {
-        self.breadcrumbs.insert(name.to_string(), value);
+    pub fn add_breadcrumbs(&mut self, name: &'static str, value: serde_json::Value) {
+        self.items.push((
+            Duration(std::time::Instant::now().duration_since(self.created_on)),
+            SpanItem::Field { name, value },
+        ))
+    }
+
+    pub fn add_transient_field(&mut self, name: &'static str, value: serde_json::Value) {
+        self.items.push((
+            Duration(std::time::Instant::now().duration_since(self.created_on)),
+            SpanItem::TransientField { name, value },
+        ))
+    }
+
+    pub fn add_query(
+        &mut self,
+        query: String,
+        bind: Option<String>,
+        result: Result<usize, String>,
+    ) {
+        self.items.push((
+            Duration(std::time::Instant::now().duration_since(self.created_on)),
+            SpanItem::Query {
+                query,
+                bind,
+                result,
+            },
+        ))
     }
 }

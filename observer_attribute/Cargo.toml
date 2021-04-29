@@ -1,6 +1,6 @@
 [package]
 name = "observer_attribute"
-version = "0.1.6"
+version = "0.1.8"
 authors = ["AbrarNitk <abrar.nitk@gmail.com>"]
 edition = "2018"
 description = "Observer Attributes"
@@ -14,14 +14,14 @@ repository = "https://github.com/ackotech/observer"
 proc-macro = true
 
 [dependencies]
-quote = "0.6"
-proc-macro2 = "0.4"
+darling = "0.9"
 lazy_static = "1"
-serde = "~1.0.27"
-serde_derive = "~1.0.27"
-serde_json = "~1.0.9"
-darling = "0.9.0"
+proc-macro2 = "0.4"
+quote = "0.6"
+serde = "1"
+serde_derive = "1"
+serde_json = "1"
 
 [dependencies.syn]
-version = "0.15.42"
 features = ["full"]
+version = "0.15"
