@@ -5,17 +5,17 @@ pub struct ObserverPostgresSqlDialect {}
 
 impl Dialect for ObserverPostgresSqlDialect {
     fn is_identifier_start(&self, ch: char) -> bool {
-        (ch >= 'a' && ch <= 'z')
-            || (ch >= 'A' && ch <= 'Z')
+        ('a'..='z').contains(&ch)
+            || ('A'..='Z').contains(&ch)
             || (ch == '@')
             || ch == '$'
             || ch == '_'
     }
 
     fn is_identifier_part(&self, ch: char) -> bool {
-        (ch >= 'a' && ch <= 'z')
-            || (ch >= 'A' && ch <= 'Z')
-            || (ch >= '0' && ch <= '9')
+        ('a'..='z').contains(&ch)
+            || ('A'..='Z').contains(&ch)
+            || ('0'..='9').contains(&ch)
             || (ch == '@')
             || ch == '$'
             || ch == '_'
@@ -31,7 +31,10 @@ fn split_query_by_where(query: &str) -> String {
 
 #[allow(dead_code)]
 pub fn parse_sql(sql: &str) -> (String, String) {
-    match Parser::parse_sql(&ObserverPostgresSqlDialect {}, split_query_by_where(sql)) {
+    match Parser::parse_sql(
+        &ObserverPostgresSqlDialect {},
+        split_query_by_where(sql).as_str(),
+    ) {
         Ok(ast) =>
         {
             #[allow(clippy::never_loop)]
@@ -49,7 +52,7 @@ pub fn parse_sql(sql: &str) -> (String, String) {
                                 }
                                 return ("select".to_string(), table_name.join("__"));
                             }
-                            _ => return ("unknown".to_string(), "unknown".to_string()),
+                            _ => return ("unknown4".to_string(), "unknown4".to_string()),
                         };
                     }
                     Statement::Update { table_name, .. } => {
@@ -84,19 +87,19 @@ pub fn parse_sql(sql: &str) -> (String, String) {
                         );
                     }
                     _ => {
-                        return ("unknown".to_string(), "unknown".to_string());
+                        return ("unknown3".to_string(), "unknown3".to_string());
                     }
                 }
             }
         }
         Err(_err) => {
-            #[cfg(debug_assertions)]
-            println!("Err : {:?}", _err);
+            // #[cfg(debug_assertions)]
+            // println!("Err: {:?}", _err);
             return ("unknown".to_string(), "unknown".to_string());
         }
     };
 
-    ("unknown".to_string(), "unknown".to_string())
+    ("unknown2".to_string(), "unknown2".to_string())
 }
 
 #[cfg(test)]

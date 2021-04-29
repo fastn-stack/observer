@@ -9,7 +9,7 @@ impl Observe {
     ) -> Result<T, E>
     where
         F: FnOnce() -> Result<T, E>,
-        E: std::fmt::Debug,
+        E: std::fmt::Display,
         Self: Sized,
     {
         crate::start_span(table_name);
@@ -19,7 +19,7 @@ impl Observe {
                 Ok(r)
             }
             Err(e) => {
-                crate::end_span(is_critical, Some(format!("{:?}", e)));
+                crate::end_span(is_critical, Some(e.to_string()));
                 Err(e)
             }
         }

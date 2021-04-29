@@ -32,7 +32,7 @@ fn get_path() -> String {
             }
             current = match current.parent() {
                 Some(p) => p.to_owned(),
-                None => panic!("Could not find observer.json"),
+                None => panic!("Could not find observer.json, current={}", current),
             };
         }
     })
@@ -44,12 +44,13 @@ lazy_static! {
 
         println!("Events Path:: {}", events_path);
         let events_file =
-            File::open(&events_path).expect(&format!("Not able to load {}", events_path));
-        serde_json::from_reader(events_file).expect(&format!("Json parse error {}", events_path))
+            File::open(&events_path).unwrap_or_else(|_| panic!("Not able to load {}", events_path));
+        serde_json::from_reader(events_file)
+            .unwrap_or_else(|_| panic!("Json parse error {}", events_path))
     };
 }
 
-const WHITELIST_EVENTS: &'static [&'static str] = &[
+const WHITELIST_EVENTS: &[&str] = &[
     "query_by_index",
     "establish",
     "execute",
@@ -57,7 +58,8 @@ const WHITELIST_EVENTS: &'static [&'static str] = &[
     "execute_returning_count",
 ];
 
-const WHITELIST_NAMESPACES: &'static [&'static str] = &["observer__pg", "observer__mysql"];
+const WHITELIST_NAMESPACES: &[&str] = &["observer__pg", "observer__mysql"];
+
 #[derive(Debug, FromMeta)]
 struct MacroArgs {
     #[darling(default)]
@@ -110,7 +112,8 @@ pub fn observed(
     if args.with_result {
         (quote! {
         #visibility fn #ident #generics (#inputs) #output #where_clause {
-            Observe::observe_with_result(#table_name, #is_critical, || {
+            use observer::observe_fields::*;
+            observer::Observe::observe_with_result(#table_name, #is_critical, || {
                 #block
             })
         }
@@ -119,7 +122,8 @@ pub fn observed(
     } else {
         (quote! {
         #visibility fn #ident #generics (#inputs) #output #where_clause {
-            Observe::observe_all(#table_name, #is_critical, || {
+            use observer::observe_fields::*;
+            observer::Observe::observe_all(#table_name, #is_critical, || {
                 #block
             })
         }
@@ -217,7 +221,7 @@ pub fn balanced_if(
 
 #[proc_macro_derive(Resulty)]
 pub fn derive_resulty(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
-    let item: syn::Item = syn::parse(input.clone()).expect("failed to parse input");
+    let item: syn::Item = syn::parse(input).expect("failed to parse input");
     let struc = get_struct_name(item).replace("\"", "");
     let st = &format!("impl Resulty for {} {}", struc, "{}");
     proc_macro2::TokenStream::from_str(st).unwrap().into()
@@ -233,7 +237,11 @@ fn get_struct_name(item: syn::Item) -> String {
 fn get_event(table: &str) -> Event {
     match EVENTS.get(table) {
         Some(e) => e.clone(),
-        None => panic!("No table named \"{}\" in the events file", table),
+        None => panic!(
+            "No entry for \"{}\" in the events file: {}",
+            table,
+            get_path()
+        ),
     }
 }
 
@@ -241,8 +249,10 @@ fn get_func(field: String, table: &str) -> String {
     match get_event(table).fields.get(&field) {
         Some(t) => get_rust_type(t),
         None => panic!(
-            "No field named \"{}\" in the fields for the table \"{}\"",
-            field, table
+            "No field named \"{}\" in the fields for the table \"{}\" ({})",
+            field,
+            table,
+            get_path()
         ),
     }
 }
@@ -273,31 +283,25 @@ fn get_rust_type(storage_type: &str) -> String {
 //}
 
 fn check_item(item: &syn::Item) {
-    match item {
-        syn::Item::Fn(func) => {
-            for stmt in func.block.stmts.iter() {
-                match stmt {
-                    syn::Stmt::Local(local) => match &local.init {
-                        Some((_, init)) => check_expr(init),
-                        None => {}
-                    },
-                    syn::Stmt::Item(i) => check_item(i),
-                    syn::Stmt::Expr(e) => check_expr(e),
-                    syn::Stmt::Semi(e, _) => check_expr(e),
-                }
+    if let syn::Item::Fn(func) = item {
+        for stmt in func.block.stmts.iter() {
+            match stmt {
+                syn::Stmt::Local(local) => match &local.init {
+                    Some((_, init)) => check_expr(init),
+                    None => {}
+                },
+                syn::Stmt::Item(i) => check_item(i),
+                syn::Stmt::Expr(e) => check_expr(e),
+                syn::Stmt::Semi(e, _) => check_expr(e),
             }
         }
-        _ => {}
     }
 }
 
 fn check_expr(expr: &syn::Expr) {
-    match expr {
-        syn::Expr::Array(a) => {
-            for e in a.elems.iter() {
-                check_expr(e)
-            }
+    if let syn::Expr::Array(a) = expr {
+        for e in a.elems.iter() {
+            check_expr(e)
         }
-        _ => {}
     }
 }
