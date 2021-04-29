@@ -32,7 +32,7 @@ fn get_path() -> String {
             }
             current = match current.parent() {
                 Some(p) => p.to_owned(),
-                None => panic!("Could not find observer.json, current={}", current),
+                None => panic!("Could not find observer.json, current={:?}", current),
             };
         }
     })
