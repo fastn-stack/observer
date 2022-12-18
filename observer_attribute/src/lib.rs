@@ -7,7 +7,6 @@ extern crate lazy_static;
 #[macro_use]
 extern crate serde_derive;
 extern crate proc_macro;
-extern crate proc_macro2;
 
 use darling::FromMeta;
 use std::collections::HashMap;
@@ -58,16 +57,17 @@ const WHITELIST_EVENTS: &'static [&'static str] = &[
 ];
 
 const WHITELIST_NAMESPACES: &'static [&'static str] = &["observer__pg", "observer__mysql"];
+
 #[derive(Debug, FromMeta)]
 struct MacroArgs {
     #[darling(default)]
     with_result: bool,
     #[darling(default)]
-    without_result: bool,
-    #[darling(default)]
     namespace: Option<String>,
-    #[darling(default)]
-    id: Option<String>,
+    // #[darling(default)]
+    // id: Option<String>,
+    // #[darling(default)]
+    // without_result: bool,
 }
 
 #[proc_macro_attribute]
@@ -85,12 +85,12 @@ pub fn observed(
 
     let input_fn: syn::ItemFn = parse_macro_input!(input as syn::ItemFn);
     let visibility = input_fn.vis;
-    let ident = input_fn.ident;
-    let inputs = input_fn.decl.inputs;
-    let output = input_fn.decl.output;
+    let ident = input_fn.sig.ident;
+    let inputs = input_fn.sig.inputs;
+    let output = input_fn.sig.output;
     let block = input_fn.block;
-    let generics = &input_fn.decl.generics;
-    let where_clause = &input_fn.decl.generics.where_clause;
+    let generics = &input_fn.sig.generics;
+    let where_clause = &input_fn.sig.generics.where_clause;
     let is_whitelist_event = WHITELIST_EVENTS.contains(&ident.to_string().as_str());
     let is_whitelist_namespace =
         WHITELIST_NAMESPACES.contains(&args.namespace.as_ref().unwrap_or(&"".to_string()).as_str());

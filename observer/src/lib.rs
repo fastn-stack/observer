@@ -5,22 +5,22 @@ extern crate serde_json;
 #[allow(unused_imports)]
 #[macro_use]
 extern crate lazy_static;
-extern crate failure;
+// extern crate failure;
 #[allow(unused_imports)]
 #[macro_use]
 extern crate observer_attribute;
 
 pub mod backends;
 pub mod context;
-#[cfg(feature = "mysql")]
-pub mod mysql;
+// #[cfg(feature = "mysql")]
+// pub mod mysql;
 pub mod observe;
 pub mod observe_fields;
-#[cfg(feature = "postgres")]
-pub mod pg;
+// #[cfg(feature = "postgres")]
+// pub mod pg;
 pub mod prelude;
 pub mod span;
-mod sql_parse;
+// mod sql_parse;
 
 pub use crate::context::Context;
 

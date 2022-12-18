@@ -1,4 +1,20 @@
 {
+  "fn_test__a": {
+    "critical" : true,
+    "result_type": "i32",
+    "fields" : {
+      "name": "string",
+      "age": "i32"
+    }
+  },
+  "fn_test__b": {
+    "critical" : true,
+    "result_type": "i32",
+    "fields" : {
+      "name": "string",
+      "age": "i32"
+    }
+  },
   "foo__create_policy" : {
     "critical" : true,
     "result_type": "list",
